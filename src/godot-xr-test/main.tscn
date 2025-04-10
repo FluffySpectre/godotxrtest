@@ -1,0 +1,41 @@
+[gd_scene load_steps=5 format=3 uid="uid://bfrq8gdq0u3kt"]
+
+[ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://init_xr.gd" id="1_ig7tw"]
+
+[sub_resource type="Environment" id="Environment_ig7tw"]
+tonemap_mode = 4
+tonemap_exposure = 1.29
+
+[sub_resource type="BoxMesh" id="BoxMesh_7dm0k"]
+size = Vector3(0.1, 0.1, 0.1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_7dm0k"]
+radius = 0.05
+height = 0.1
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_ig7tw")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_ig7tw")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.974699, -0.124539, 0.185613, 3.90122e-08, 0.830401, 0.557166, -0.223522, -0.543068, 0.809391, -0.434428, 0, 0)
+
+[node name="XROrigin3D" type="XROrigin3D" parent="."]
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
+
+[node name="LeftXRNode3D" type="XRNode3D" parent="XROrigin3D"]
+tracker = &"left_hand"
+show_when_tracked = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/LeftXRNode3D"]
+mesh = SubResource("BoxMesh_7dm0k")
+
+[node name="RightXRNode3D" type="XRNode3D" parent="XROrigin3D"]
+tracker = &"right_hand"
+show_when_tracked = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/RightXRNode3D"]
+mesh = SubResource("SphereMesh_7dm0k")
