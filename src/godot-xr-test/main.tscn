@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://bfrq8gdq0u3kt"]
+[gd_scene load_steps=8 format=3 uid="uid://bfrq8gdq0u3kt"]
 
 [ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://scripts/xr_manager.gd" id="1_ig7tw"]
-[ext_resource type="PackedScene" uid="uid://dtk24pfpo3c4v" path="res://assets/models/LeftHandHumanoid.gltf" id="2_0xm2m"]
 [ext_resource type="Script" uid="uid://cnsuqsixmccw0" path="res://scripts/app_manager.gd" id="2_7mycd"]
 [ext_resource type="Material" uid="uid://dyj6nhr84rwiu" path="res://assets/models/hand.tres" id="3_1bvp3"]
-[ext_resource type="PackedScene" uid="uid://cxwa6rhux4m6e" path="res://assets/models/RightHandHumanoid.gltf" id="3_h2yge"]
+[ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="4_7mycd"]
+[ext_resource type="PackedScene" uid="uid://bufelcry36rw1" path="res://addons/xr-autohandtracker/auto_handtracker.tscn" id="5_7mycd"]
+[ext_resource type="PackedScene" uid="uid://bdkstolm7rlft" path="res://assets/models/valve_hand/vr_glove_right_model_slim_v9.fbx" id="5_lquwl"]
 
 [sub_resource type="Environment" id="Environment_ig7tw"]
 background_mode = 1
@@ -28,33 +29,29 @@ script = ExtResource("2_7mycd")
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
 
-[node name="LeftXRNode3D" type="XRNode3D" parent="XROrigin3D"]
+[node name="LeftXRNode3D" type="XRController3D" parent="XROrigin3D"]
 tracker = &"left_hand"
 show_when_tracked = true
 
-[node name="LeftHandHumanoid2" parent="XROrigin3D/LeftXRNode3D" instance=ExtResource("2_0xm2m")]
-transform = Transform3D(0.641303, 0.133211, 0.755635, -0.0380753, 0.989125, -0.142059, -0.766342, 0.062332, 0.639402, 0, 0, 0)
+[node name="vr_glove_left_model_slim_v9" parent="XROrigin3D/LeftXRNode3D" instance=ExtResource("4_7mycd")]
 
-[node name="LeftHandHumanoid" parent="XROrigin3D/LeftXRNode3D/LeftHandHumanoid2" index="0"]
-transform = Transform3D(0.0308998, 0.135169, 0.990341, -0.991819, -0.118629, 0.0471373, 0.123855, -0.983695, 0.130398, 0, 0, 0)
-
-[node name="LeftHandHumanoidMesh" parent="XROrigin3D/LeftXRNode3D/LeftHandHumanoid2/LeftHandHumanoid/Skeleton3D" index="0"]
+[node name="vr_glove_left_slim" parent="XROrigin3D/LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="0"]
 surface_material_override/0 = ExtResource("3_1bvp3")
 
-[node name="XRHandModifier3D" type="XRHandModifier3D" parent="XROrigin3D/LeftXRNode3D/LeftHandHumanoid2/LeftHandHumanoid/Skeleton3D" index="1"]
+[node name="AutoHandtracker" parent="XROrigin3D/LeftXRNode3D" instance=ExtResource("5_7mycd")]
+visiblehandtrackskeleton = false
 
-[node name="RightXRNode3D" type="XRNode3D" parent="XROrigin3D"]
+[node name="RightXRNode3D" type="XRController3D" parent="XROrigin3D"]
 tracker = &"right_hand"
 show_when_tracked = true
 
-[node name="RightHandHumanoid2" parent="XROrigin3D/RightXRNode3D" instance=ExtResource("3_h2yge")]
-transform = Transform3D(-0.327418, -0.0377664, -0.944125, 0.943322, 0.0442997, -0.328911, 0.0542463, -0.998304, 0.0211214, 0, 0, 0.15644)
+[node name="vr_glove_right_model_slim_v9" parent="XROrigin3D/RightXRNode3D" instance=ExtResource("5_lquwl")]
 
-[node name="RightHandHumanoidMesh" parent="XROrigin3D/RightXRNode3D/RightHandHumanoid2/RightHandHumanoid/Skeleton3D" index="0"]
+[node name="vr_glove_right_slim" parent="XROrigin3D/RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="0"]
 surface_material_override/0 = ExtResource("3_1bvp3")
 
-[node name="XRHandModifier3D" type="XRHandModifier3D" parent="XROrigin3D/RightXRNode3D/RightHandHumanoid2/RightHandHumanoid/Skeleton3D" index="1"]
-hand_tracker = &"/user/hand_tracker/right"
+[node name="AutoHandtracker" parent="XROrigin3D/RightXRNode3D" instance=ExtResource("5_7mycd")]
+visiblehandtrackskeleton = false
 
-[editable path="XROrigin3D/LeftXRNode3D/LeftHandHumanoid2"]
-[editable path="XROrigin3D/RightXRNode3D/RightHandHumanoid2"]
+[editable path="XROrigin3D/LeftXRNode3D/vr_glove_left_model_slim_v9"]
+[editable path="XROrigin3D/RightXRNode3D/vr_glove_right_model_slim_v9"]
