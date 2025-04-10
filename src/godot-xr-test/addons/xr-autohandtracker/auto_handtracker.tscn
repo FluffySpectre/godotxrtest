@@ -1,8 +1,8 @@
 [gd_scene load_steps=20 format=3 uid="uid://bufelcry36rw1"]
 
-[ext_resource type="Script" path="res://addons/xr-autohandtracker/auto_handtracker.gd" id="1_kokq6"]
-[ext_resource type="Script" path="res://addons/xr-autohandtracker/visible_handtrack_skeleton.gd" id="2_51p5j"]
-[ext_resource type="Script" path="res://addons/xr-autohandtracker/auto_tracker.gd" id="3_6kyde"]
+[ext_resource type="Script" uid="uid://bfk4xln8hjmcs" path="res://addons/xr-autohandtracker/auto_handtracker.gd" id="1_kokq6"]
+[ext_resource type="Script" uid="uid://53pyllvnhr2c" path="res://addons/xr-autohandtracker/visible_handtrack_skeleton.gd" id="2_51p5j"]
+[ext_resource type="Script" uid="uid://6n7kj1bksu0g" path="res://addons/xr-autohandtracker/auto_tracker.gd" id="3_6kyde"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_lsd0h"]
 size = Vector3(0.1, 0.8, 0.1)
@@ -88,27 +88,33 @@ mesh = SubResource("BoxMesh_h2ysa")
 surface_material_override/0 = SubResource("StandardMaterial3D_kb47o")
 
 [node name="AutoTracker" type="Node3D" parent="."]
+visible = false
 script = ExtResource("3_6kyde")
 
 [node name="DragRod" type="MeshInstance3D" parent="AutoTracker"]
 transform = Transform3D(-8.74228e-09, -1, 0, 0.2, -4.37114e-08, 0, 0, 0, 0.2, -0.5, 0, 0)
+visible = false
 mesh = SubResource("CylinderMesh_ga8xh")
 surface_material_override/0 = SubResource("StandardMaterial3D_2y0qr")
 
 [node name="ThumbstickBoundaries" type="Node3D" parent="AutoTracker"]
+visible = false
 
 [node name="InnerRing" type="MeshInstance3D" parent="AutoTracker/ThumbstickBoundaries"]
+visible = false
 mesh = SubResource("TorusMesh_r0bsl")
 skeleton = NodePath("../..")
 surface_material_override/0 = SubResource("StandardMaterial3D_r0qnr")
 
 [node name="OuterRing" type="MeshInstance3D" parent="AutoTracker/ThumbstickBoundaries"]
+visible = false
 mesh = SubResource("TorusMesh_wsh6v")
 skeleton = NodePath("../..")
 surface_material_override/0 = SubResource("StandardMaterial3D_r0qnr")
 
 [node name="UpDisc" type="MeshInstance3D" parent="AutoTracker/ThumbstickBoundaries"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+visible = false
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_pce3n")
 skeleton = NodePath("../..")
@@ -116,15 +122,18 @@ surface_material_override/0 = SubResource("StandardMaterial3D_2wqtw")
 
 [node name="DownDisc" type="MeshInstance3D" parent="AutoTracker/ThumbstickBoundaries"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+visible = false
 cast_shadow = 0
 mesh = SubResource("CylinderMesh_pce3n")
 skeleton = NodePath("../..")
 surface_material_override/0 = SubResource("StandardMaterial3D_53tyc")
 
 [node name="GraspMarker" type="MeshInstance3D" parent="AutoTracker"]
+visible = false
 mesh = SubResource("BoxMesh_epivk")
 skeleton = NodePath("../..")
 
 [node name="ControllerMarker" type="MeshInstance3D" parent="AutoTracker"]
+visible = false
 mesh = SubResource("BoxMesh_ssbes")
 skeleton = NodePath("../..")

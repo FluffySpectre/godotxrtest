@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://bfrq8gdq0u3kt"]
+[gd_scene load_steps=15 format=3 uid="uid://bfrq8gdq0u3kt"]
 
 [ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://scripts/xr_manager.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://cnsuqsixmccw0" path="res://scripts/app_manager.gd" id="2_7mycd"]
@@ -6,7 +6,10 @@
 [ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="4_7mycd"]
 [ext_resource type="PackedScene" uid="uid://bufelcry36rw1" path="res://addons/xr-autohandtracker/auto_handtracker.tscn" id="5_7mycd"]
 [ext_resource type="PackedScene" uid="uid://bdkstolm7rlft" path="res://assets/models/valve_hand/vr_glove_right_model_slim_v9.fbx" id="5_lquwl"]
+[ext_resource type="Script" uid="uid://d3u7st03gfs8h" path="res://scripts/hand_interaction_manager.gd" id="7_5vw27"]
 [ext_resource type="Material" uid="uid://yinejrxdxmbi" path="res://assets/materials/ground.tres" id="7_272bh"]
+[ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="9_kek77"]
+[ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="10_4c57u"]
 
 [sub_resource type="Environment" id="Environment_ig7tw"]
 background_mode = 1
@@ -18,8 +21,10 @@ tonemap_exposure = 1.29
 material = ExtResource("7_272bh")
 size = Vector2(500, 500)
 
-[sub_resource type="BoxMesh" id="BoxMesh_272bh"]
-size = Vector3(0.25, 0.25, 0.25)
+[sub_resource type="BoxShape3D" id="BoxShape3D_kek77"]
+size = Vector3(500, 0.233, 500)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kek77"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_ig7tw")
@@ -63,6 +68,12 @@ surface_material_override/0 = ExtResource("3_1bvp3")
 visiblehandtrackskeleton = false
 enableautotracker = false
 
+[node name="HandInteractionManager" type="Node3D" parent="XROrigin3D" node_paths=PackedStringArray("left_controller", "right_controller")]
+script = ExtResource("7_5vw27")
+left_controller = NodePath("../LeftXRNode3D")
+right_controller = NodePath("../RightXRNode3D")
+metadata/_custom_type_script = "uid://d3u7st03gfs8h"
+
 [node name="Scene" type="Node3D" parent="."]
 
 [node name="GroundPlane" type="Node3D" parent="Scene"]
@@ -71,11 +82,28 @@ visible = false
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Scene/GroundPlane"]
 mesh = SubResource("PlaneMesh_7mycd")
 
-[node name="Node3D" type="Node3D" parent="Scene"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.02354, -0.661445)
+[node name="GroundCollider" type="Node3D" parent="."]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Scene/Node3D"]
-mesh = SubResource("BoxMesh_272bh")
+[node name="StaticBody3D" type="StaticBody3D" parent="GroundCollider"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroundCollider/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.111008, 0)
+shape = SubResource("BoxShape3D_kek77")
+
+[node name="InteractableObject" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.206)
+script = ExtResource("9_kek77")
+metadata/_custom_type_script = "uid://bd4ss8ud3hrk6"
+
+[node name="Model" type="Node3D" parent="InteractableObject"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="InteractableObject/Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_kek77")
+
+[node name="GroundDetection" type="RayCast3D" parent="InteractableObject"]
+script = ExtResource("10_4c57u")
+metadata/_custom_type_script = "uid://bt8ikstfac4bg"
 
 [editable path="XROrigin3D/LeftXRNode3D/vr_glove_left_model_slim_v9"]
 [editable path="XROrigin3D/RightXRNode3D/vr_glove_right_model_slim_v9"]
