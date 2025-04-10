@@ -1,11 +1,14 @@
-[gd_scene load_steps=6 format=3 uid="uid://bfrq8gdq0u3kt"]
+[gd_scene load_steps=7 format=3 uid="uid://bfrq8gdq0u3kt"]
 
-[ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://scripts/init_xr.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://scripts/xr_manager.gd" id="1_ig7tw"]
 [ext_resource type="PackedScene" uid="uid://dtk24pfpo3c4v" path="res://assets/models/LeftHandHumanoid.gltf" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://cnsuqsixmccw0" path="res://scripts/app_manager.gd" id="2_7mycd"]
 [ext_resource type="Material" uid="uid://dyj6nhr84rwiu" path="res://assets/models/hand.tres" id="3_1bvp3"]
 [ext_resource type="PackedScene" uid="uid://cxwa6rhux4m6e" path="res://assets/models/RightHandHumanoid.gltf" id="3_h2yge"]
 
 [sub_resource type="Environment" id="Environment_ig7tw"]
+background_mode = 1
+background_color = Color(0, 0, 0, 0)
 tonemap_mode = 4
 tonemap_exposure = 1.29
 
@@ -17,6 +20,9 @@ environment = SubResource("Environment_ig7tw")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.974699, -0.124539, 0.185613, 3.90122e-08, 0.830401, 0.557166, -0.223522, -0.543068, 0.809391, -0.434428, 0, 0)
+
+[node name="AppManager" type="Node3D" parent="."]
+script = ExtResource("2_7mycd")
 
 [node name="XROrigin3D" type="XROrigin3D" parent="."]
 

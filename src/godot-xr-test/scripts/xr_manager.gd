@@ -1,4 +1,4 @@
-extends Node3D
+class_name XRManager extends Node3D
 
 signal focus_lost
 signal focus_gained
@@ -6,11 +6,16 @@ signal pose_recentered
 
 @export var maximum_refresh_rate : int = 90
 
+@onready var viewport : Viewport = get_viewport()
+@onready var environment : Environment = $WorldEnvironment.environment
+
+static var instance: XRManager
+
 var xr_interface : OpenXRInterface
 var xr_is_focussed = false
 
 # Called when the node enters the scene tree for the first time.
-func _ready():
+func _enter_tree():
   xr_interface = XRServer.find_interface("OpenXR")
   if xr_interface and xr_interface.is_initialized():
     print("OpenXR instantiated successfully.")
@@ -69,6 +74,8 @@ func _on_openxr_session_begun() -> void:
 
   # Now match our physics rate
   Engine.physics_ticks_per_second = current_refresh_rate
+  
+  switch_to_ar()
 
 # Handle OpenXR visible state
 func _on_openxr_visible_state() -> void:
@@ -104,3 +111,27 @@ func _on_openxr_pose_recentered() -> void:
   # User recentered view, we have to react to this by recentering the view.
   # This is game implementation dependent.
   emit_signal("pose_recentered")
+
+func switch_to_ar() -> bool:
+  var modes = xr_interface.get_supported_environment_blend_modes()
+  if XRInterface.XR_ENV_BLEND_MODE_ALPHA_BLEND in modes:
+    xr_interface.environment_blend_mode = XRInterface.XR_ENV_BLEND_MODE_ALPHA_BLEND
+    viewport.transparent_bg = true
+  elif XRInterface.XR_ENV_BLEND_MODE_ADDITIVE in modes:
+    xr_interface.environment_blend_mode = XRInterface.XR_ENV_BLEND_MODE_ADDITIVE
+    viewport.transparent_bg = false
+
+  environment.background_mode = Environment.BG_COLOR
+  environment.background_color = Color(0.0, 0.0, 0.0, 0.0)
+  environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+  return true
+
+func switch_to_vr() -> bool:
+  var modes = xr_interface.get_supported_environment_blend_modes()
+  if XRInterface.XR_ENV_BLEND_MODE_OPAQUE in modes:
+    xr_interface.environment_blend_mode = XRInterface.XR_ENV_BLEND_MODE_OPAQUE
+
+  viewport.transparent_bg = false
+  environment.background_mode = Environment.BG_SKY
+  environment.ambient_light_source = Environment.AMBIENT_SOURCE_BG
+  return true
