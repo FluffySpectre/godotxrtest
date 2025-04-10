@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bfrq8gdq0u3kt"]
+[gd_scene load_steps=11 format=3 uid="uid://bfrq8gdq0u3kt"]
 
 [ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://scripts/xr_manager.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://cnsuqsixmccw0" path="res://scripts/app_manager.gd" id="2_7mycd"]
@@ -6,12 +6,20 @@
 [ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="4_7mycd"]
 [ext_resource type="PackedScene" uid="uid://bufelcry36rw1" path="res://addons/xr-autohandtracker/auto_handtracker.tscn" id="5_7mycd"]
 [ext_resource type="PackedScene" uid="uid://bdkstolm7rlft" path="res://assets/models/valve_hand/vr_glove_right_model_slim_v9.fbx" id="5_lquwl"]
+[ext_resource type="Material" uid="uid://yinejrxdxmbi" path="res://assets/materials/ground.tres" id="7_272bh"]
 
 [sub_resource type="Environment" id="Environment_ig7tw"]
 background_mode = 1
 background_color = Color(0, 0, 0, 0)
 tonemap_mode = 4
 tonemap_exposure = 1.29
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_7mycd"]
+material = ExtResource("7_272bh")
+size = Vector2(500, 500)
+
+[sub_resource type="BoxMesh" id="BoxMesh_272bh"]
+size = Vector3(0.25, 0.25, 0.25)
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_ig7tw")
@@ -40,6 +48,7 @@ surface_material_override/0 = ExtResource("3_1bvp3")
 
 [node name="AutoHandtracker" parent="XROrigin3D/LeftXRNode3D" instance=ExtResource("5_7mycd")]
 visiblehandtrackskeleton = false
+enableautotracker = false
 
 [node name="RightXRNode3D" type="XRController3D" parent="XROrigin3D"]
 tracker = &"right_hand"
@@ -52,6 +61,21 @@ surface_material_override/0 = ExtResource("3_1bvp3")
 
 [node name="AutoHandtracker" parent="XROrigin3D/RightXRNode3D" instance=ExtResource("5_7mycd")]
 visiblehandtrackskeleton = false
+enableautotracker = false
+
+[node name="Scene" type="Node3D" parent="."]
+
+[node name="GroundPlane" type="Node3D" parent="Scene"]
+visible = false
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Scene/GroundPlane"]
+mesh = SubResource("PlaneMesh_7mycd")
+
+[node name="Node3D" type="Node3D" parent="Scene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.02354, -0.661445)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Scene/Node3D"]
+mesh = SubResource("BoxMesh_272bh")
 
 [editable path="XROrigin3D/LeftXRNode3D/vr_glove_left_model_slim_v9"]
 [editable path="XROrigin3D/RightXRNode3D/vr_glove_right_model_slim_v9"]
