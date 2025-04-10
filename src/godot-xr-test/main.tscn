@@ -1,17 +1,13 @@
-[gd_scene load_steps=5 format=3 uid="uid://bfrq8gdq0u3kt"]
+[gd_scene load_steps=6 format=3 uid="uid://bfrq8gdq0u3kt"]
 
-[ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://init_xr.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://scripts/init_xr.gd" id="1_ig7tw"]
+[ext_resource type="PackedScene" uid="uid://dtk24pfpo3c4v" path="res://assets/models/LeftHandHumanoid.gltf" id="2_0xm2m"]
+[ext_resource type="Material" uid="uid://dyj6nhr84rwiu" path="res://assets/models/hand.tres" id="3_1bvp3"]
+[ext_resource type="PackedScene" uid="uid://cxwa6rhux4m6e" path="res://assets/models/RightHandHumanoid.gltf" id="3_h2yge"]
 
 [sub_resource type="Environment" id="Environment_ig7tw"]
 tonemap_mode = 4
 tonemap_exposure = 1.29
-
-[sub_resource type="BoxMesh" id="BoxMesh_7dm0k"]
-size = Vector3(0.1, 0.1, 0.1)
-
-[sub_resource type="SphereMesh" id="SphereMesh_7dm0k"]
-radius = 0.05
-height = 0.1
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_ig7tw")
@@ -30,12 +26,29 @@ transform = Transform3D(0.974699, -0.124539, 0.185613, 3.90122e-08, 0.830401, 0.
 tracker = &"left_hand"
 show_when_tracked = true
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/LeftXRNode3D"]
-mesh = SubResource("BoxMesh_7dm0k")
+[node name="LeftHandHumanoid2" parent="XROrigin3D/LeftXRNode3D" instance=ExtResource("2_0xm2m")]
+transform = Transform3D(0.641303, 0.133211, 0.755635, -0.0380753, 0.989125, -0.142059, -0.766342, 0.062332, 0.639402, 0, 0, 0)
+
+[node name="LeftHandHumanoid" parent="XROrigin3D/LeftXRNode3D/LeftHandHumanoid2" index="0"]
+transform = Transform3D(0.0308998, 0.135169, 0.990341, -0.991819, -0.118629, 0.0471373, 0.123855, -0.983695, 0.130398, 0, 0, 0)
+
+[node name="LeftHandHumanoidMesh" parent="XROrigin3D/LeftXRNode3D/LeftHandHumanoid2/LeftHandHumanoid/Skeleton3D" index="0"]
+surface_material_override/0 = ExtResource("3_1bvp3")
+
+[node name="XRHandModifier3D" type="XRHandModifier3D" parent="XROrigin3D/LeftXRNode3D/LeftHandHumanoid2/LeftHandHumanoid/Skeleton3D" index="1"]
 
 [node name="RightXRNode3D" type="XRNode3D" parent="XROrigin3D"]
 tracker = &"right_hand"
 show_when_tracked = true
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/RightXRNode3D"]
-mesh = SubResource("SphereMesh_7dm0k")
+[node name="RightHandHumanoid2" parent="XROrigin3D/RightXRNode3D" instance=ExtResource("3_h2yge")]
+transform = Transform3D(-0.327418, -0.0377664, -0.944125, 0.943322, 0.0442997, -0.328911, 0.0542463, -0.998304, 0.0211214, 0, 0, 0.15644)
+
+[node name="RightHandHumanoidMesh" parent="XROrigin3D/RightXRNode3D/RightHandHumanoid2/RightHandHumanoid/Skeleton3D" index="0"]
+surface_material_override/0 = ExtResource("3_1bvp3")
+
+[node name="XRHandModifier3D" type="XRHandModifier3D" parent="XROrigin3D/RightXRNode3D/RightHandHumanoid2/RightHandHumanoid/Skeleton3D" index="1"]
+hand_tracker = &"/user/hand_tracker/right"
+
+[editable path="XROrigin3D/LeftXRNode3D/LeftHandHumanoid2"]
+[editable path="XROrigin3D/RightXRNode3D/RightHandHumanoid2"]
