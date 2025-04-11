@@ -1,11 +1,11 @@
-[gd_resource type="StandardMaterial3D" load_steps=3 format=3 uid="uid://dyj6nhr84rwiu"]
-
-[ext_resource type="Texture2D" uid="uid://ctej6vitwdlfn" path="res://assets/models/valve_hand/textures/vr_glove_color.jpg" id="1_6fq3y"]
-[ext_resource type="Texture2D" uid="uid://cirrhbtf2b1vq" path="res://assets/models/valve_hand/textures/vr_glove_normal.png" id="2_4um6o"]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://dyj6nhr84rwiu"]
 
 [resource]
-albedo_texture = ExtResource("1_6fq3y")
+transparency = 1
+depth_draw_mode = 1
+albedo_color = Color(0, 0.490196, 0.764706, 0.352941)
 metallic = 0.32
 roughness = 0.75
 normal_enabled = true
-normal_texture = ExtResource("2_4um6o")
+rim_enabled = true
+rim_tint = 0.15

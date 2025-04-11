@@ -12,12 +12,14 @@ signal scaling_ended
 @export var min_scale: float = 0.1
 @export var max_scale: float = 2.0
 @export var snap_to_ground: bool = false
-@export var movement_threshold: float = 0.05  # Distance in meters before movement starts
+# TODO: Remove this whole threshold thing. Not needed anymore...
+@export var movement_threshold: float = 0.0 #0.05  # Distance in meters before movement starts
 
 # References
 @onready var model = $Model
 @onready var hand_tracking_manager: HandInteractionManager = $"/root/Main/XROrigin3D/HandInteractionManager"
 @onready var ground_detection: GroundDetection = $GroundDetection
+@onready var interaction_area: InteractionArea = $InteractionArea/InteractionAreaInner
 
 # State variables
 var is_moving: bool = false            # Tracking if we're in movement mode
@@ -29,6 +31,7 @@ var initial_object_position: Vector3   # Starting position of the object
 var initial_distance: float = 0.0      # Starting distance between hands for scaling
 var initial_scale: float = 1.0         # Starting scale of the model
 var hands_pinching: Dictionary = {"left": false, "right": false}
+var hands_in_area: Dictionary = {"left": false, "right": false}  # Track which hands are in the interaction area
 var cumulative_movement: float = 0.0
 var last_hand_positions: Dictionary = {"left": Vector3.ZERO, "right": Vector3.ZERO}
 
@@ -48,6 +51,12 @@ func _ready():
 func _process(delta):
     # Update hand positions
     _update_hand_positions()
+    
+    # Update hands in area
+    _update_hands_in_area()
+    
+    # Match the scale of the interaction area with the models one
+    _update_area_scale()
     
     # Check if we need to switch to scaling mode (but only if movement hasn't started yet)
     _check_for_mode_switch()
@@ -69,6 +78,26 @@ func _update_hand_positions():
     if hand_tracking_manager.right_controller:
         last_hand_positions["right"] = hand_tracking_manager.right_controller.global_transform.origin
 
+func _update_hands_in_area():
+    # Check if each hand position is inside the interaction area
+    for hand_name in ["left", "right"]:
+        if last_hand_positions.has(hand_name):
+            var hand_position = last_hand_positions[hand_name]
+            var hand_in_area = interaction_area.is_position_in_area(hand_position)
+            
+            # Only update and log when state changes
+            if hand_in_area != hands_in_area.get(hand_name, false):
+                hands_in_area[hand_name] = hand_in_area
+                if hand_in_area:
+                    print(hand_name, " hand entered interaction area")
+                    interaction_area.set_highlight(true)
+                else:
+                    print(hand_name, " hand exited interaction area")
+                    interaction_area.set_highlight(false)
+
+func _update_area_scale():
+  interaction_area.scale_area(model.scale.x)
+    
 func _check_for_mode_switch():
     # Only allow switching to scaling if we're not in active movement mode
     # (we're in pre-movement state where the threshold hasn't been crossed yet)
@@ -96,9 +125,12 @@ func _on_pinch_started(hand_name):
         else:
             print("Movement already active, ignoring scaling attempt")
     # If only one hand is pinching and we're not in any active mode
-    elif !is_scaling and !is_moving and can_move:
+    # AND the hand is inside the interaction area
+    elif !is_scaling and !is_moving and can_move and hands_in_area[hand_name]:
         print("Preparing movement mode with hand: ", hand_name)
         _start_movement(hand_name)
+    elif !hands_in_area[hand_name]:
+        print("Hand is pinching but not inside interaction area")
 
 func _on_pinch_ended(hand_name):
     print("Pinch ended: ", hand_name)
@@ -118,6 +150,8 @@ func _start_movement(hand_name):
     is_moving = true
     active_hand = hand_name
     movement_started = false
+    
+    # TODO: Remove this, not needed anymore
     cumulative_movement = 0.0
     
     # Store initial positions
