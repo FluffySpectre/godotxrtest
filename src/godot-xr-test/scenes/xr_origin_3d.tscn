@@ -1,6 +1,5 @@
-[gd_scene load_steps=8 format=3 uid="uid://be3xnhmmb0v3j"]
+[gd_scene load_steps=7 format=3 uid="uid://be3xnhmmb0v3j"]
 
-[ext_resource type="Script" uid="uid://dh7yme5a7c6eg" path="res://scripts/fps_label.gd" id="1_g4cwv"]
 [ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="2_hg5dl"]
 [ext_resource type="Material" uid="uid://dyj6nhr84rwiu" path="res://assets/models/hand.tres" id="3_dd1ma"]
 [ext_resource type="PackedScene" uid="uid://bufelcry36rw1" path="res://addons/xr-autohandtracker/auto_handtracker.tscn" id="4_4hrip"]
@@ -15,13 +14,6 @@
 [node name="LeftXRNode3D" type="XRController3D" parent="."]
 tracker = &"left_hand"
 show_when_tracked = true
-
-[node name="FPSLabel" type="Label3D" parent="LeftXRNode3D"]
-transform = Transform3D(0.07, 0, 0, 0, 0.07, 0, 0, 0, 0.07, 0, 0, 0)
-billboard = 1
-outline_size = 2
-script = ExtResource("1_g4cwv")
-metadata/_custom_type_script = "uid://dh7yme5a7c6eg"
 
 [node name="vr_glove_left_model_slim_v9" parent="LeftXRNode3D" instance=ExtResource("2_hg5dl")]
 
