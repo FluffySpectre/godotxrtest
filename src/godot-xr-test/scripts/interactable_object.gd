@@ -5,15 +5,18 @@ signal pinch_move_started(hand_name)
 signal pinch_move_ended(hand_name)
 signal scaling_started
 signal scaling_ended
+signal rotation_started(hand_name)
+signal rotation_ended(hand_name)
 
 # Properties
 @export var can_scale: bool = true
 @export var can_move: bool = true
+@export var can_rotate: bool = true
 @export var min_scale: float = 0.1
 @export var max_scale: float = 2.0
+@export var rotation_speed: float = 40.0
 @export var snap_to_ground: bool = false
-# TODO: Remove this whole threshold thing. Not needed anymore...
-@export var movement_threshold: float = 0.0 #0.05  # Distance in meters before movement starts
+@export var rotation_threshold: float = 0.015  # Distance in meters before rotation starts
 
 # References
 @onready var model = $Model
@@ -24,10 +27,15 @@ signal scaling_ended
 # State variables
 var is_moving: bool = false            # Tracking if we're in movement mode
 var is_scaling: bool = false           # Tracking if we're in scaling mode
+var is_rotating: bool = false          # Tracking if we're in rotation mode
 var movement_started: bool = false     # Tracking if we've crossed the movement threshold
-var active_hand: String = ""           # Which hand is controlling movement
+var is_rotation_active: bool = false   # Tracking if we've crossed the rotation threshold
+var active_hand: String = ""           # Which hand is controlling movement/rotation
 var initial_pinch_position: Vector3    # Starting position of the pinching hand
 var initial_object_position: Vector3   # Starting position of the object
+var initial_object_rotation: float     # Starting rotation of the object
+var initial_hand_x: float              # Starting X position for rotation calculation
+var last_hand_x: float = 0.0           # Last frame's X position for smoother rotation
 var initial_distance: float = 0.0      # Starting distance between hands for scaling
 var initial_scale: float = 1.0         # Starting scale of the model
 var hands_pinching: Dictionary = {"left": false, "right": false}
@@ -45,8 +53,8 @@ func _ready():
         initial_scale = model.scale.x
     
     print("Interactable object initialized: ", name)
-    print("Can scale: ", can_scale, ", Can move: ", can_move)
-    print("Movement threshold: ", movement_threshold)
+    print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate)
+    print("Rotation threshold: ", rotation_threshold)
 
 func _process(delta):
     # Update hand positions
@@ -55,17 +63,33 @@ func _process(delta):
     # Update hands in area
     _update_hands_in_area()
     
-    # Match the scale of the interaction area with the models one
-    _update_area_scale()
+    # Match the scale and rotation of the interaction area with the models one
+    _update_area_transform()
     
-    # Check if we need to switch to scaling mode (but only if movement hasn't started yet)
-    _check_for_mode_switch()
+    # Check for two-hand scaling
+    if hands_pinching["left"] and hands_pinching["right"] and can_scale and !is_scaling:
+        if (!is_moving and !is_rotating) or (is_rotating and !is_rotation_active) or (is_moving and !movement_started):
+            # We're either not in a mode or in a pre-threshold state, so we can switch to scaling
+            print("Both hands pinching - starting scaling")
+            
+            if is_moving:
+                _end_movement()
+            if is_rotating:
+                _end_rotation()
+                
+            _start_scaling()
     
-    # Handle the active mode
+    # Update rotation (check if we've crossed the threshold)
+    if is_rotating and !is_rotation_active and active_hand != "":
+        _check_rotation_threshold()
+    
+    # Handle the active interaction modes
     if is_scaling and can_scale:
         _update_scale()
-    elif is_moving and can_move:
+    elif is_moving and can_move and movement_started:
         _update_position()
+    elif is_rotating and can_rotate and is_rotation_active:
+        _update_rotation(delta)
     
     # Apply ground snapping when not being manipulated
     if snap_to_ground and !is_moving:
@@ -93,44 +117,56 @@ func _update_hands_in_area():
                     interaction_area.set_highlight(true)
                 else:
                     print(hand_name, " hand exited interaction area")
-                    interaction_area.set_highlight(false)
+                    if active_hand == "" or active_hand != hand_name:  # Only turn off highlight if not currently interacting
+                        interaction_area.set_highlight(false)
 
-func _update_area_scale():
-  interaction_area.scale_area(model.scale.x)
+func _update_area_transform():
+    interaction_area.scale_area(model.scale.x)
+    interaction_area.rotate_area(model.rotation)
+
+func _check_rotation_threshold():
+    if !is_rotating or active_hand == "" or !last_hand_positions.has(active_hand):
+        return
+        
+    var current_hand_position = last_hand_positions[active_hand]
+    var movement = current_hand_position - initial_pinch_position
+    var horizontal_movement = abs(current_hand_position.x - initial_pinch_position.x)
     
-func _check_for_mode_switch():
-    # Only allow switching to scaling if we're not in active movement mode
-    # (we're in pre-movement state where the threshold hasn't been crossed yet)
-    if hands_pinching["left"] and hands_pinching["right"] and !is_scaling and can_scale:
-        if is_moving and !movement_started:
-            # We're in pre-movement state, so we can still switch to scaling
-            _end_movement()
-            _start_scaling()
-        elif !is_moving:
-            # Not in movement mode at all, so we can start scaling
-            _start_scaling()
+    # We primarily care about horizontal movement for rotation
+    if horizontal_movement >= rotation_threshold:
+        print("Rotation threshold crossed: ", horizontal_movement)
+        is_rotation_active = true
+        
+        # Reset the initial positions, so the model does not jumps to the new position
+        initial_pinch_position = current_hand_position
+        initial_hand_x = initial_pinch_position.x
+        last_hand_x = initial_hand_x
+        
+        emit_signal("rotation_started", active_hand)
+    else:
+        print("Waiting for rotation threshold: current=", horizontal_movement, ", threshold=", rotation_threshold)
 
 func _on_pinch_started(hand_name):
     print("Pinch started: ", hand_name)
     hands_pinching[hand_name] = true
     
-    # If both hands are pinching, check if we can start scaling mode
-    if hands_pinching["left"] and hands_pinching["right"] and can_scale:
-        # Only start scaling if we're not in active movement mode
-        if !is_moving or (is_moving and !movement_started):
-            print("Starting scaling mode")
-            if is_moving:
-                _end_movement()
+    # If we're not in any interaction mode
+    if !is_scaling and !is_moving and !is_rotating:
+        # Check if both hands are pinching for scaling
+        if hands_pinching["left"] and hands_pinching["right"] and can_scale:
+            print("Both hands pinched - starting scaling mode")
             _start_scaling()
+        # Single hand - check if the pinch started inside or outside the interaction area
+        elif hands_in_area[hand_name] and can_move:
+            # Pinch inside area - start movement mode
+            print("Pinch inside interaction area, preparing movement with hand: ", hand_name)
+            _start_movement(hand_name)
+        elif !hands_in_area[hand_name] and can_rotate:
+            # Pinch outside area - prepare rotation mode
+            print("Pinch outside interaction area, preparing rotation with hand: ", hand_name)
+            _prepare_rotation(hand_name)
         else:
-            print("Movement already active, ignoring scaling attempt")
-    # If only one hand is pinching and we're not in any active mode
-    # AND the hand is inside the interaction area
-    elif !is_scaling and !is_moving and can_move and hands_in_area[hand_name]:
-        print("Preparing movement mode with hand: ", hand_name)
-        _start_movement(hand_name)
-    elif !hands_in_area[hand_name]:
-        print("Hand is pinching but not inside interaction area")
+            print("Hand is pinching but not eligible for interaction")
 
 func _on_pinch_ended(hand_name):
     print("Pinch ended: ", hand_name)
@@ -141,25 +177,28 @@ func _on_pinch_ended(hand_name):
         print("Ending scaling mode")
         _end_scaling()
     
-    # If the active hand stops pinching during movement, end movement mode
-    if is_moving and active_hand == hand_name:
-        print("Ending movement mode")
-        _end_movement()
+    # If the active hand stops pinching during movement or rotation, end that mode
+    if active_hand == hand_name:
+        if is_moving:
+            print("Ending movement mode")
+            _end_movement()
+        if is_rotating:
+            print("Ending rotation mode")
+            _end_rotation()
 
 func _start_movement(hand_name):
+    _reset_all_modes()
+    
     is_moving = true
     active_hand = hand_name
-    movement_started = false
-    
-    # TODO: Remove this, not needed anymore
-    cumulative_movement = 0.0
+    movement_started = true  # For simplicity, we're starting movement immediately
     
     # Store initial positions
     initial_pinch_position = last_hand_positions[hand_name]
     initial_object_position = global_transform.origin
     
-    print("Movement prepared with hand: ", hand_name)
-    # We don't emit the signal yet, only when movement actually starts
+    print("Movement started with hand: ", hand_name)
+    emit_signal("pinch_move_started", hand_name)
 
 func _end_movement():
     if !is_moving:
@@ -173,12 +212,44 @@ func _end_movement():
     print("Movement ended")
     emit_signal("pinch_move_ended", previous_hand)
 
+func _prepare_rotation(hand_name):
+    _reset_all_modes()
+    
+    is_rotating = true
+    active_hand = hand_name
+    is_rotation_active = false  # We'll set this to true when the threshold is crossed
+    
+    # Store initial positions
+    initial_pinch_position = last_hand_positions[hand_name]
+    initial_hand_x = initial_pinch_position.x
+    last_hand_x = initial_hand_x
+    initial_object_rotation = model.rotation.y
+    
+    print("Rotation prepared with hand: ", hand_name)
+    print("Initial hand X: ", initial_hand_x)
+    print("Initial object rotation: ", initial_object_rotation)
+    print("Waiting for hand to move ", rotation_threshold, "m horizontally to start rotating")
+
+func _end_rotation():
+    if !is_rotating:
+        return
+    
+    is_rotating = false
+    is_rotation_active = false
+    var previous_hand = active_hand
+    active_hand = ""
+    
+    print("Rotation ended")
+    emit_signal("rotation_ended", previous_hand)
+
 func _start_scaling():
     # Don't start scaling if we don't have positions for both hands
     if !last_hand_positions.has("left") or !last_hand_positions.has("right"):
         print("Cannot start scaling: missing hand positions")
         return
-        
+    
+    _reset_all_modes()
+    
     is_scaling = true
     
     # Get hand positions
@@ -201,6 +272,15 @@ func _end_scaling():
     print("Scaling ended")
     emit_signal("scaling_ended")
 
+func _reset_all_modes():
+    # Reset all interaction states
+    is_moving = false
+    is_rotating = false
+    is_scaling = false
+    movement_started = false
+    is_rotation_active = false
+    active_hand = ""
+
 func _update_position():
     if !is_moving or !active_hand or !last_hand_positions.has(active_hand):
         return
@@ -208,20 +288,28 @@ func _update_position():
     var current_hand_position = last_hand_positions[active_hand]
     var movement_vector = current_hand_position - initial_pinch_position
     
-    # Calculate total movement distance
-    if !movement_started:
-        cumulative_movement = movement_vector.length()  # Use absolute distance, not cumulative
-        
-        # Check if we've moved past the threshold
-        if cumulative_movement >= movement_threshold:
-            print("Movement threshold reached: ", cumulative_movement, " >= ", movement_threshold)
-            movement_started = true
-            emit_signal("pinch_move_started", active_hand)  # Now emit the signal
-    
-    # Only update position if we've passed the movement threshold
-    if movement_started:
-        global_transform.origin = initial_object_position + movement_vector
+    # Apply movement directly
+    global_transform.origin = initial_object_position + movement_vector
 
+func _update_rotation(delta):
+    if !is_rotating or !is_rotation_active or !active_hand or !last_hand_positions.has(active_hand):
+        return
+    
+    var current_hand_position = last_hand_positions[active_hand]
+    var current_hand_x = current_hand_position.x
+    
+    # Calculate horizontal displacement from initial position
+    var x_displacement = current_hand_x - initial_hand_x
+    
+    # Apply rotation based on horizontal movement
+    if model:
+        # Apply rotation directly based on hand movement
+        var new_rotation = initial_object_rotation + x_displacement * rotation_speed * 0.1
+        model.rotation.y = new_rotation
+        
+        # Print debug info
+        print("Rotating: displacement=", x_displacement, " new rotation=", model.rotation.y)
+    
 func _update_scale():
     if !is_scaling or !model:
         return

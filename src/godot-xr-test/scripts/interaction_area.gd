@@ -10,6 +10,9 @@ func _ready() -> void:
 func scale_area(scale_value: float) -> void:
   _parent.scale = Vector3(scale_value, scale_value, scale_value)
 
+func rotate_area(rotate_value: Vector3) -> void:
+  _parent.rotation = rotate_value
+
 func is_position_in_area(position: Vector3) -> bool:    
     if not interaction_area_collision or not interaction_area_collision.shape:
         return false
