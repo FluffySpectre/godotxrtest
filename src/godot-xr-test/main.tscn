@@ -10,10 +10,13 @@
 [ext_resource type="Material" uid="uid://yinejrxdxmbi" path="res://assets/materials/ground.tres" id="7_272bh"]
 [ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="9_kek77"]
 [ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="10_4c57u"]
+[ext_resource type="PackedScene" uid="uid://b203bddsc0rog" path="res://assets/models/car/car.glb" id="10_efxa6"]
 
 [sub_resource type="Environment" id="Environment_ig7tw"]
 background_mode = 1
 background_color = Color(0, 0, 0, 0)
+ambient_light_source = 2
+ambient_light_color = Color(0.450648, 0.450648, 0.450648, 1)
 tonemap_mode = 4
 tonemap_exposure = 1.29
 
@@ -23,8 +26,6 @@ size = Vector2(500, 500)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kek77"]
 size = Vector3(500, 0.233, 500)
-
-[sub_resource type="BoxMesh" id="BoxMesh_kek77"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_ig7tw")
@@ -48,6 +49,26 @@ show_when_tracked = true
 
 [node name="vr_glove_left_model_slim_v9" parent="XROrigin3D/LeftXRNode3D" instance=ExtResource("4_7mycd")]
 
+[node name="Skeleton3D" parent="XROrigin3D/LeftXRNode3D/vr_glove_left_model_slim_v9" index="0"]
+bones/2/position = Vector3(-1.71738e-16, 3.53242e-09, -0.0404061)
+bones/3/position = Vector3(2.77556e-16, 2.84271e-09, -0.0325168)
+bones/4/position = Vector3(3.17454e-16, 2.66325e-09, -0.030464)
+bones/4/rotation = Quaternion(-1.83187e-15, 9.15934e-16, 1.90646e-15, 1)
+bones/6/position = Vector3(3.19189e-16, 6.45159e-09, -0.0737975)
+bones/7/position = Vector3(2.5327e-16, 3.78423e-09, -0.0432866)
+bones/8/position = Vector3(-1.38778e-17, 2.4719e-09, -0.0282752)
+bones/11/position = Vector3(1.68268e-16, 6.19701e-09, -0.0708855)
+bones/12/position = Vector3(6.07153e-17, 3.76867e-09, -0.0431085)
+bones/13/position = Vector3(5.0307e-17, 2.9082e-09, -0.0332659)
+bones/16/position = Vector3(2.13371e-16, 5.76772e-09, -0.065975)
+bones/17/position = Vector3(-2.61726e-16, 3.52587e-09, -0.0403312)
+bones/18/position = Vector3(-1.43765e-16, 2.49057e-09, -0.0284888)
+bones/21/position = Vector3(9.71445e-17, 5.49502e-09, -0.0628556)
+bones/22/position = Vector3(-1.21431e-16, 2.6117e-09, -0.0298743)
+bones/23/position = Vector3(-1.00614e-16, 1.57173e-09, -0.0179785)
+bones/24/position = Vector3(2.08167e-17, 1.57518e-09, -0.0180179)
+bones/24/rotation = Quaternion(7.21645e-16, 6.38378e-16, -3.40006e-16, 1)
+
 [node name="vr_glove_left_slim" parent="XROrigin3D/LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="0"]
 surface_material_override/0 = ExtResource("3_1bvp3")
 
@@ -60,6 +81,14 @@ tracker = &"right_hand"
 show_when_tracked = true
 
 [node name="vr_glove_right_model_slim_v9" parent="XROrigin3D/RightXRNode3D" instance=ExtResource("5_lquwl")]
+
+[node name="Skeleton3D" parent="XROrigin3D/RightXRNode3D/vr_glove_right_model_slim_v9" index="0"]
+bones/3/position = Vector3(1.43545e-08, -5.11376e-08, -0.0325168)
+bones/4/rotation = Quaternion(-1.73472e-17, -2.498e-16, -4.30211e-16, 1)
+bones/7/position = Vector3(-1.49657e-07, 4.35785e-08, -0.0432867)
+bones/17/position = Vector3(2.67261e-09, -9.80847e-10, -0.0403312)
+bones/18/position = Vector3(-7.21517e-08, 3.48773e-09, -0.0284888)
+bones/19/rotation = Quaternion(-8.46545e-16, -4.54498e-15, -4.94743e-15, 1)
 
 [node name="vr_glove_right_slim" parent="XROrigin3D/RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="0"]
 surface_material_override/0 = ExtResource("3_1bvp3")
@@ -97,9 +126,8 @@ metadata/_custom_type_script = "uid://bd4ss8ud3hrk6"
 
 [node name="Model" type="Node3D" parent="InteractableObject"]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="InteractableObject/Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_kek77")
+[node name="car" parent="InteractableObject/Model" instance=ExtResource("10_efxa6")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
 
 [node name="GroundDetection" type="RayCast3D" parent="InteractableObject"]
 script = ExtResource("10_4c57u")
