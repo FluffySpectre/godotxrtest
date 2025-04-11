@@ -1,0 +1,88 @@
+[gd_scene load_steps=8 format=3 uid="uid://be3xnhmmb0v3j"]
+
+[ext_resource type="Script" uid="uid://dh7yme5a7c6eg" path="res://scripts/fps_label.gd" id="1_g4cwv"]
+[ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="2_hg5dl"]
+[ext_resource type="Material" uid="uid://dyj6nhr84rwiu" path="res://assets/models/hand.tres" id="3_dd1ma"]
+[ext_resource type="PackedScene" uid="uid://bufelcry36rw1" path="res://addons/xr-autohandtracker/auto_handtracker.tscn" id="4_4hrip"]
+[ext_resource type="PackedScene" uid="uid://bdkstolm7rlft" path="res://assets/models/valve_hand/vr_glove_right_model_slim_v9.fbx" id="5_2ofhi"]
+[ext_resource type="Script" uid="uid://d3u7st03gfs8h" path="res://scripts/hand_interaction_manager.gd" id="6_xllm5"]
+[ext_resource type="Script" uid="uid://0if0m2ftvto7" path="res://scripts/gaze_selection.gd" id="7_tydbt"]
+
+[node name="XROrigin3D" type="XROrigin3D"]
+
+[node name="XRCamera3D" type="XRCamera3D" parent="."]
+
+[node name="LeftXRNode3D" type="XRController3D" parent="."]
+tracker = &"left_hand"
+show_when_tracked = true
+
+[node name="FPSLabel" type="Label3D" parent="LeftXRNode3D"]
+transform = Transform3D(0.07, 0, 0, 0, 0.07, 0, 0, 0, 0.07, 0, 0, 0)
+billboard = 1
+outline_size = 2
+script = ExtResource("1_g4cwv")
+metadata/_custom_type_script = "uid://dh7yme5a7c6eg"
+
+[node name="vr_glove_left_model_slim_v9" parent="LeftXRNode3D" instance=ExtResource("2_hg5dl")]
+
+[node name="Skeleton3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9" index="0"]
+bones/2/position = Vector3(-1.71738e-16, 3.53242e-09, -0.0404061)
+bones/3/position = Vector3(2.77556e-16, 2.84271e-09, -0.0325168)
+bones/4/position = Vector3(3.17454e-16, 2.66325e-09, -0.030464)
+bones/4/rotation = Quaternion(-1.83187e-15, 9.15934e-16, 1.90646e-15, 1)
+bones/6/position = Vector3(3.19189e-16, 6.45159e-09, -0.0737975)
+bones/7/position = Vector3(2.5327e-16, 3.78423e-09, -0.0432866)
+bones/8/position = Vector3(-1.38778e-17, 2.4719e-09, -0.0282752)
+bones/11/position = Vector3(1.68268e-16, 6.19701e-09, -0.0708855)
+bones/12/position = Vector3(6.07153e-17, 3.76867e-09, -0.0431085)
+bones/13/position = Vector3(5.0307e-17, 2.9082e-09, -0.0332659)
+bones/16/position = Vector3(2.13371e-16, 5.76772e-09, -0.065975)
+bones/17/position = Vector3(-2.61726e-16, 3.52587e-09, -0.0403312)
+bones/18/position = Vector3(-1.43765e-16, 2.49057e-09, -0.0284888)
+bones/21/position = Vector3(9.71445e-17, 5.49502e-09, -0.0628556)
+bones/22/position = Vector3(-1.21431e-16, 2.6117e-09, -0.0298743)
+bones/23/position = Vector3(-1.00614e-16, 1.57173e-09, -0.0179785)
+bones/24/position = Vector3(2.08167e-17, 1.57518e-09, -0.0180179)
+bones/24/rotation = Quaternion(7.21645e-16, 6.38378e-16, -3.40006e-16, 1)
+
+[node name="vr_glove_left_slim" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="0"]
+surface_material_override/0 = ExtResource("3_dd1ma")
+
+[node name="AutoHandtracker" parent="LeftXRNode3D" instance=ExtResource("4_4hrip")]
+visiblehandtrackskeleton = false
+enableautotracker = false
+
+[node name="RightXRNode3D" type="XRController3D" parent="."]
+tracker = &"right_hand"
+show_when_tracked = true
+
+[node name="vr_glove_right_model_slim_v9" parent="RightXRNode3D" instance=ExtResource("5_2ofhi")]
+
+[node name="Skeleton3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9" index="0"]
+bones/3/position = Vector3(1.43545e-08, -5.11376e-08, -0.0325168)
+bones/4/rotation = Quaternion(-1.73472e-17, -2.498e-16, -4.30211e-16, 1)
+bones/7/position = Vector3(-1.49657e-07, 4.35785e-08, -0.0432867)
+bones/17/position = Vector3(2.67261e-09, -9.80847e-10, -0.0403312)
+bones/18/position = Vector3(-7.21517e-08, 3.48773e-09, -0.0284888)
+bones/19/rotation = Quaternion(-8.46545e-16, -4.54498e-15, -4.94743e-15, 1)
+
+[node name="vr_glove_right_slim" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="0"]
+surface_material_override/0 = ExtResource("3_dd1ma")
+
+[node name="AutoHandtracker" parent="RightXRNode3D" instance=ExtResource("4_4hrip")]
+visiblehandtrackskeleton = false
+enableautotracker = false
+
+[node name="HandInteractionManager" type="Node3D" parent="." node_paths=PackedStringArray("left_controller", "right_controller")]
+script = ExtResource("6_xllm5")
+left_controller = NodePath("../LeftXRNode3D")
+right_controller = NodePath("../RightXRNode3D")
+metadata/_custom_type_script = "uid://d3u7st03gfs8h"
+
+[node name="GazeSelection" type="Node3D" parent="." node_paths=PackedStringArray("xr_camera")]
+script = ExtResource("7_tydbt")
+xr_camera = NodePath("../XRCamera3D")
+metadata/_custom_type_script = "uid://0if0m2ftvto7"
+
+[editable path="LeftXRNode3D/vr_glove_left_model_slim_v9"]
+[editable path="RightXRNode3D/vr_glove_right_model_slim_v9"]

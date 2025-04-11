@@ -14,7 +14,7 @@ signal rotation_ended(hand_name)
 @export var can_rotate: bool = true
 @export var min_scale: float = 0.1
 @export var max_scale: float = 2.0
-@export var rotation_speed: float = 40.0
+@export var rotation_speed: float = 200.0
 @export var snap_to_ground: bool = false
 @export var rotation_threshold: float = 0.015  # Distance in meters before rotation starts
 
@@ -42,6 +42,23 @@ var hands_pinching: Dictionary = {"left": false, "right": false}
 var hands_in_area: Dictionary = {"left": false, "right": false}  # Track which hands are in the interaction area
 var cumulative_movement: float = 0.0
 var last_hand_positions: Dictionary = {"left": Vector3.ZERO, "right": Vector3.ZERO}
+var is_selected: bool = false
+
+func set_selected(selected: bool):
+    # Don't update if state is already correct
+    if is_selected == selected:
+        return
+        
+    is_selected = selected
+    
+    # Update visual feedback for selection
+    #if is_selected:
+        ## Show selection highlight
+        #interaction_area.set_highlight(true)
+    #else:
+        ## Hide highlight unless there's an active interaction
+        #if !is_moving:
+            #interaction_area.set_highlight(false)
 
 func _ready():
     # Connect signals from hand tracking manager
@@ -66,18 +83,22 @@ func _process(delta):
     # Match the scale and rotation of the interaction area with the models one
     _update_area_transform()
     
-    # Check for two-hand scaling
+    # Check for two-hand scaling (requires selection)
     if hands_pinching["left"] and hands_pinching["right"] and can_scale and !is_scaling:
-        if (!is_moving and !is_rotating) or (is_rotating and !is_rotation_active) or (is_moving and !movement_started):
-            # We're either not in a mode or in a pre-threshold state, so we can switch to scaling
-            print("Both hands pinching - starting scaling")
-            
-            if is_moving:
-                _end_movement()
-            if is_rotating:
-                _end_rotation()
+        # Only allow scaling if object is selected
+        if is_selected:
+            if (!is_moving and !is_rotating) or (is_rotating and !is_rotation_active) or (is_moving and !movement_started):
+                # We're either not in a mode or in a pre-threshold state, so we can switch to scaling
+                print("Both hands pinching - starting scaling")
                 
-            _start_scaling()
+                if is_moving:
+                    _end_movement()
+                if is_rotating:
+                    _end_rotation()
+                    
+                _start_scaling()
+        else:
+            print("Scaling requires object to be selected first")
     
     # Update rotation (check if we've crossed the threshold)
     if is_rotating and !is_rotation_active and active_hand != "":
@@ -152,19 +173,18 @@ func _on_pinch_started(hand_name):
     
     # If we're not in any interaction mode
     if !is_scaling and !is_moving and !is_rotating:
-        # Check if both hands are pinching for scaling
-        if hands_pinching["left"] and hands_pinching["right"] and can_scale:
-            print("Both hands pinched - starting scaling mode")
-            _start_scaling()
         # Single hand - check if the pinch started inside or outside the interaction area
-        elif hands_in_area[hand_name] and can_move:
-            # Pinch inside area - start movement mode
+        if hands_in_area[hand_name] and can_move:
+            # Pinch inside area - start movement mode (allowed for all objects)
             print("Pinch inside interaction area, preparing movement with hand: ", hand_name)
             _start_movement(hand_name)
         elif !hands_in_area[hand_name] and can_rotate:
-            # Pinch outside area - prepare rotation mode
-            print("Pinch outside interaction area, preparing rotation with hand: ", hand_name)
-            _prepare_rotation(hand_name)
+            # Pinch outside area - prepare rotation mode (requires selection)
+            if is_selected:
+                print("Pinch outside interaction area, preparing rotation with hand: ", hand_name)
+                _prepare_rotation(hand_name)
+            else:
+                print("Rotation requires object to be selected first")
         else:
             print("Hand is pinching but not eligible for interaction")
 
@@ -296,20 +316,26 @@ func _update_rotation(delta):
         return
     
     var current_hand_position = last_hand_positions[active_hand]
-    var current_hand_x = current_hand_position.x
     
-    # Calculate horizontal displacement from initial position
-    var x_displacement = current_hand_x - initial_hand_x
+    # Get the hand movement relative to the object's position
+    var object_position = global_transform.origin
+    var hand_vector_prev = initial_pinch_position - object_position
+    var hand_vector_current = current_hand_position - object_position
     
-    # Apply rotation based on horizontal movement
+    # Project these vectors to the XZ plane (horizontal)
+    hand_vector_prev.y = 0
+    hand_vector_current.y = 0
+    
+    # Calculate the angle between these vectors (in radians)
+    var angle = hand_vector_prev.signed_angle_to(hand_vector_current, Vector3.UP)
+    
+    # Use the angle for rotation, with proper delta time and sensitivity
     if model:
-        # Apply rotation directly based on hand movement
-        var new_rotation = initial_object_rotation + x_displacement * rotation_speed * 0.1
-        model.rotation.y = new_rotation
+        var rotation_amount = angle * rotation_speed * delta
+        model.rotation.y = initial_object_rotation + rotation_amount
         
-        # Print debug info
-        print("Rotating: displacement=", x_displacement, " new rotation=", model.rotation.y)
-    
+        #print("Rotating: angle=", rad_to_deg(angle), " new rotation=", model.rotation.y)
+     
 func _update_scale():
     if !is_scaling or !model:
         return
