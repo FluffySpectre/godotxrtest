@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://be3xnhmmb0v3j"]
 
 [ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="2_hg5dl"]
-[ext_resource type="Material" uid="uid://dyj6nhr84rwiu" path="res://assets/models/hand.tres" id="3_dd1ma"]
+[ext_resource type="Material" uid="uid://byabtrj56ihu" path="res://assets/materials/hand_shader.tres" id="2_j2fxx"]
 [ext_resource type="PackedScene" uid="uid://bufelcry36rw1" path="res://addons/xr-autohandtracker/auto_handtracker.tscn" id="4_4hrip"]
 [ext_resource type="PackedScene" uid="uid://bdkstolm7rlft" path="res://assets/models/valve_hand/vr_glove_right_model_slim_v9.fbx" id="5_2ofhi"]
 [ext_resource type="Script" uid="uid://d3u7st03gfs8h" path="res://scripts/hand_interaction_manager.gd" id="6_xllm5"]
@@ -38,7 +38,7 @@ bones/24/position = Vector3(2.08167e-17, 1.57518e-09, -0.0180179)
 bones/24/rotation = Quaternion(7.21645e-16, 6.38378e-16, -3.40006e-16, 1)
 
 [node name="vr_glove_left_slim" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="0"]
-surface_material_override/0 = ExtResource("3_dd1ma")
+surface_material_override/0 = ExtResource("2_j2fxx")
 
 [node name="AutoHandtracker" parent="LeftXRNode3D" instance=ExtResource("4_4hrip")]
 visiblehandtrackskeleton = false
@@ -59,7 +59,7 @@ bones/18/position = Vector3(-7.21517e-08, 3.48773e-09, -0.0284888)
 bones/19/rotation = Quaternion(-8.46545e-16, -4.54498e-15, -4.94743e-15, 1)
 
 [node name="vr_glove_right_slim" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="0"]
-surface_material_override/0 = ExtResource("3_dd1ma")
+surface_material_override/0 = ExtResource("2_j2fxx")
 
 [node name="AutoHandtracker" parent="RightXRNode3D" instance=ExtResource("4_4hrip")]
 visiblehandtrackskeleton = false
