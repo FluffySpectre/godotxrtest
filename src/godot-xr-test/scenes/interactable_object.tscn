@@ -1,16 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://61dm6hahi3ve"]
+[gd_scene load_steps=5 format=3 uid="uid://61dm6hahi3ve"]
 
 [ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_35x0o"]
 [ext_resource type="PackedScene" uid="uid://b203bddsc0rog" path="res://assets/models/car/car.glb" id="2_gpwir"]
 [ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="3_nb01e"]
-[ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="4_vfa4w"]
-[ext_resource type="Material" uid="uid://c6dtlgo8toq3w" path="res://assets/materials/interaction_area.tres" id="5_b513d"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_efxa6"]
-size = Vector3(2.45264, 1.10376, 1.297)
-
-[sub_resource type="BoxMesh" id="BoxMesh_efxa6"]
-material = ExtResource("5_b513d")
+[ext_resource type="PackedScene" uid="uid://q1eeywkosbpm" path="res://scenes/interaction_area.tscn" id="4_ieyjc"]
 
 [node name="InteractableObject" type="Node3D"]
 script = ExtResource("1_35x0o")
@@ -25,16 +18,4 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 
 script = ExtResource("3_nb01e")
 metadata/_custom_type_script = "uid://bt8ikstfac4bg"
 
-[node name="InteractionArea" type="Node3D" parent="."]
-
-[node name="InteractionAreaInner" type="Area3D" parent="InteractionArea"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.559742, 0)
-script = ExtResource("4_vfa4w")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea/InteractionAreaInner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0263672, 0.00419831, -0.00262451)
-shape = SubResource("BoxShape3D_efxa6")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="InteractionArea/InteractionAreaInner"]
-transform = Transform3D(2.453, 0, 0, 0, 1.1, 0, 0, 0, 1.297, 0, 0, 0)
-mesh = SubResource("BoxMesh_efxa6")
+[node name="InteractionArea" parent="." instance=ExtResource("4_ieyjc")]

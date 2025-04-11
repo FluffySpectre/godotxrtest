@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3 uid="uid://q1eeywkosbpm"]
+
+[ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="1_8sep7"]
+[ext_resource type="Material" uid="uid://c6dtlgo8toq3w" path="res://assets/materials/interaction_area.tres" id="2_li2uv"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_efxa6"]
+size = Vector3(2.45264, 1.10376, 1.297)
+
+[sub_resource type="BoxMesh" id="BoxMesh_efxa6"]
+material = ExtResource("2_li2uv")
+
+[node name="InteractionArea" type="Node3D"]
+
+[node name="InteractionAreaInner" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.559742, 0)
+script = ExtResource("1_8sep7")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionAreaInner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0263672, 0.00419831, -0.00262451)
+shape = SubResource("BoxShape3D_efxa6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="InteractionAreaInner"]
+transform = Transform3D(2.453, 0, 0, 0, 1.1, 0, 0, 0, 1.297, 0, 0, 0)
+mesh = SubResource("BoxMesh_efxa6")
