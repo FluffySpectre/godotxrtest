@@ -4,7 +4,7 @@ class_name GazeSelection extends Node3D
 @export var xr_camera: XRCamera3D
 
 # Maximum distance for the gaze ray
-@export var max_distance: float = 5.0
+@export var max_distance: float = 8.0
 
 # Layer mask for interactable objects
 @export_flags("Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5") var interaction_mask: int = 1
@@ -31,7 +31,7 @@ func _update_selection():
     var query = PhysicsRayQueryParameters3D.create(from, to)
     query.collision_mask = interaction_mask
     
-    # Allow ray to hit areas (in case InteractableObjects use Area3D)
+    # Allow ray to hit areas
     query.collide_with_areas = true
     
     var result = space_state.intersect_ray(query)

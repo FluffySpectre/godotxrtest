@@ -1,11 +1,16 @@
-[gd_scene load_steps=7 format=3 uid="uid://be3xnhmmb0v3j"]
+[gd_scene load_steps=10 format=3 uid="uid://be3xnhmmb0v3j"]
 
 [ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="2_hg5dl"]
 [ext_resource type="Material" uid="uid://byabtrj56ihu" path="res://assets/materials/hand_shader.tres" id="2_j2fxx"]
 [ext_resource type="PackedScene" uid="uid://bufelcry36rw1" path="res://addons/xr-autohandtracker/auto_handtracker.tscn" id="4_4hrip"]
+[ext_resource type="Script" uid="uid://dayu5anlgov04" path="res://scripts/follow_wrist.gd" id="4_g4cwv"]
 [ext_resource type="PackedScene" uid="uid://bdkstolm7rlft" path="res://assets/models/valve_hand/vr_glove_right_model_slim_v9.fbx" id="5_2ofhi"]
+[ext_resource type="Script" uid="uid://dh7yme5a7c6eg" path="res://scripts/fps_label.gd" id="5_hg5dl"]
 [ext_resource type="Script" uid="uid://d3u7st03gfs8h" path="res://scripts/hand_interaction_manager.gd" id="6_xllm5"]
 [ext_resource type="Script" uid="uid://0if0m2ftvto7" path="res://scripts/gaze_selection.gd" id="7_tydbt"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_j2fxx"]
+size = Vector3(0.03, 0.03, 0.03)
 
 [node name="XROrigin3D" type="XROrigin3D"]
 
@@ -43,6 +48,26 @@ surface_material_override/0 = ExtResource("2_j2fxx")
 [node name="AutoHandtracker" parent="LeftXRNode3D" instance=ExtResource("4_4hrip")]
 visiblehandtrackskeleton = false
 enableautotracker = false
+
+[node name="AttachmentPointWrist" type="Node3D" parent="LeftXRNode3D"]
+
+[node name="Node3D" type="Node3D" parent="LeftXRNode3D/AttachmentPointWrist"]
+
+[node name="FPSLabel" type="Label3D" parent="LeftXRNode3D/AttachmentPointWrist/Node3D"]
+transform = Transform3D(0.025, 0, 0, 0, 0.025, 0, 0, 0, 0.025, 0, 0, 0)
+font_size = 60
+outline_size = 2
+script = ExtResource("5_hg5dl")
+metadata/_custom_type_script = "uid://dh7yme5a7c6eg"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftXRNode3D/AttachmentPointWrist"]
+visible = false
+mesh = SubResource("BoxMesh_j2fxx")
+
+[node name="FollowWrist" type="Node" parent="LeftXRNode3D/AttachmentPointWrist"]
+script = ExtResource("4_g4cwv")
+offset = Vector3(0, 0.02, 0.02)
+metadata/_custom_type_script = "uid://dayu5anlgov04"
 
 [node name="RightXRNode3D" type="XRController3D" parent="."]
 tracker = &"right_hand"
