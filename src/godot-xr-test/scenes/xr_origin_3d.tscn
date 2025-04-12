@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://be3xnhmmb0v3j"]
+[gd_scene load_steps=12 format=3 uid="uid://be3xnhmmb0v3j"]
 
 [ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="2_hg5dl"]
 [ext_resource type="Material" uid="uid://byabtrj56ihu" path="res://assets/materials/hand_shader.tres" id="2_j2fxx"]
@@ -8,9 +8,15 @@
 [ext_resource type="Script" uid="uid://dh7yme5a7c6eg" path="res://scripts/fps_label.gd" id="5_hg5dl"]
 [ext_resource type="Script" uid="uid://d3u7st03gfs8h" path="res://scripts/hand_interaction_manager.gd" id="6_xllm5"]
 [ext_resource type="Script" uid="uid://0if0m2ftvto7" path="res://scripts/gaze_selection.gd" id="7_tydbt"]
+[ext_resource type="Script" uid="uid://bftg045hnrand" path="res://scripts/interaction_zone_manager.gd" id="9_dd1ma"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_j2fxx"]
 size = Vector3(0.03, 0.03, 0.03)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dd1ma"]
+transparency = 1
+depth_draw_mode = 1
+albedo_color = Color(0.956863, 0.180392, 0.529412, 0.262745)
 
 [node name="XROrigin3D" type="XROrigin3D"]
 
@@ -100,6 +106,16 @@ metadata/_custom_type_script = "uid://d3u7st03gfs8h"
 script = ExtResource("7_tydbt")
 xr_camera = NodePath("../XRCamera3D")
 metadata/_custom_type_script = "uid://0if0m2ftvto7"
+
+[node name="InteractionZoneManager" type="Node3D" parent="." node_paths=PackedStringArray("xr_camera", "hand_interaction_manager")]
+script = ExtResource("9_dd1ma")
+xr_camera = NodePath("../XRCamera3D")
+hand_interaction_manager = NodePath("../HandInteractionManager")
+visualize_zone = false
+zone_material = SubResource("StandardMaterial3D_dd1ma")
+debug_mode = false
+show_hand_markers = false
+metadata/_custom_type_script = "uid://bftg045hnrand"
 
 [editable path="LeftXRNode3D/vr_glove_left_model_slim_v9"]
 [editable path="RightXRNode3D/vr_glove_right_model_slim_v9"]

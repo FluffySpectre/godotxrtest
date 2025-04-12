@@ -21,6 +21,7 @@ signal rotation_ended(hand_name)
 # References
 @onready var model = $Model
 @onready var hand_tracking_manager: HandInteractionManager = $"/root/Main/XROrigin3D/HandInteractionManager"
+@onready var interaction_zone_manager: InteractionZoneManager = $"/root/Main/XROrigin3D/InteractionZoneManager"
 @onready var ground_detection: GroundDetection = $GroundDetection
 @onready var interaction_area: InteractionArea = $InteractionArea/InteractionAreaInner
 
@@ -62,8 +63,8 @@ func set_selected(selected: bool):
 
 func _ready():
     # Connect signals from hand tracking manager
-    hand_tracking_manager.pinch_started.connect(_on_pinch_started)
-    hand_tracking_manager.pinch_ended.connect(_on_pinch_ended)
+    interaction_zone_manager.pinch_started.connect(_on_pinch_started)
+    interaction_zone_manager.pinch_ended.connect(_on_pinch_ended)
     
     # Store initial scale
     if model:
@@ -98,7 +99,8 @@ func _process(delta):
                     
                 _start_scaling()
         else:
-            print("Scaling requires object to be selected first")
+            #print("Scaling requires object to be selected first")
+            pass
     
     # Update rotation (check if we've crossed the threshold)
     if is_rotating and !is_rotation_active and active_hand != "":
