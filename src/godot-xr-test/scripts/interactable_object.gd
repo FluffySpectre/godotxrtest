@@ -16,7 +16,7 @@ signal rotation_ended(hand_name)
 @export var max_scale: float = 2.0
 @export var rotation_speed: float = 200.0
 @export var snap_to_ground: bool = false
-@export var rotation_threshold: float = 0.015  # Distance in meters before rotation starts
+@export var rotation_threshold: float = 0.02  # Distance in meters before rotation starts
 
 # References
 @onready var model = $Model

@@ -16,7 +16,7 @@ var right_pinching = false
 var left_grabbing = false
 var right_grabbing = false
 
-# Gesture thresholds (adjust based on testing)
+# Gesture thresholds
 const PINCH_THRESHOLD = 0.7
 const GRAB_THRESHOLD = 0.8
 
