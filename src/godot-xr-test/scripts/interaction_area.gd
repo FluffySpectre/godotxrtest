@@ -1,10 +1,16 @@
 class_name InteractionArea extends Area3D
 
+@export var interaction_area_material: Material
+
 @onready var _parent = get_parent() as Node3D
 @onready var interaction_area_collision: CollisionShape3D = $CollisionShape3D
 @onready var interaction_area_mesh: MeshInstance3D = $MeshInstance3D
 
+var _wireframe_box: WireframeBox
+
 func _ready() -> void:
+  _setup_wireframe_box()
+  
   set_highlight(false)
 
 func scale_area(scale_value: float) -> void:
@@ -36,4 +42,9 @@ func is_position_in_area(position: Vector3) -> bool:
     )
 
 func set_highlight(highlight: bool) -> void:
-  interaction_area_mesh.visible = highlight
+  #interaction_area_mesh.visible = highlight
+  _wireframe_box.visible = highlight
+
+func _setup_wireframe_box() -> void:
+    _wireframe_box = WireframeBox.new(interaction_area_material, interaction_area_mesh.scale)
+    add_child(_wireframe_box)

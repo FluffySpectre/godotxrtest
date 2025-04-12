@@ -165,7 +165,8 @@ func _check_rotation_threshold():
         
         emit_signal("rotation_started", active_hand)
     else:
-        print("Waiting for rotation threshold: current=", horizontal_movement, ", threshold=", rotation_threshold)
+        pass
+        #print("Waiting for rotation threshold: current=", horizontal_movement, ", threshold=", rotation_threshold)
 
 func _on_pinch_started(hand_name):
     print("Pinch started: ", hand_name)
