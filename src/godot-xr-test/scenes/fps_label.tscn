@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://dyvvdvkh4mh23"]
+
+[ext_resource type="Script" uid="uid://dh7yme5a7c6eg" path="res://scripts/fps_label.gd" id="1_8sdj4"]
+[ext_resource type="Script" uid="uid://bgxltble43h6x" path="res://scripts/xr_rig_attachment.gd" id="2_f1wt8"]
+
+[node name="FPSLabel" type="Node3D"]
+
+[node name="Contents" type="Node3D" parent="."]
+
+[node name="Label" type="Label3D" parent="Contents"]
+transform = Transform3D(0, 0.025, 2.18557e-09, -0.025, 0, 0, 0, -2.18557e-09, 0.025, 0.0252858, 0.0266731, 0.000826429)
+font_size = 60
+outline_size = 2
+script = ExtResource("1_8sdj4")
+metadata/_custom_type_script = "uid://dh7yme5a7c6eg"
+
+[node name="XRRigAttachment" type="Node" parent="."]
+script = ExtResource("2_f1wt8")
+metadata/_custom_type_script = "uid://bgxltble43h6x"

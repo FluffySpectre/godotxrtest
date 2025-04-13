@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3 uid="uid://bk2k8mu6ali7q"]
+
+[ext_resource type="Script" uid="uid://bevoksctu4lev" path="res://scripts/wrist_menu/ui_menu_button.gd" id="1_4qaxo"]
+[ext_resource type="Script" uid="uid://bgxltble43h6x" path="res://scripts/xr_rig_attachment.gd" id="2_8dd11"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_884vg"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8dd11"]
+albedo_color = Color(0.8185, 0, 0.275442, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8dd11"]
+material = SubResource("StandardMaterial3D_8dd11")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_884vg"]
+size = Vector3(0.02, 0.01, 0.02)
+
+[node name="WristMenu" type="Node3D"]
+
+[node name="Contents" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0275327, 0)
+
+[node name="UIMenuButton" type="Node3D" parent="Contents"]
+script = ExtResource("1_4qaxo")
+metadata/_custom_type_script = "uid://bevoksctu4lev"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Contents/UIMenuButton"]
+transform = Transform3D(0.02, 0, 0, 0, 0.005, 0, 0, 0, 0.02, 0, 0, 0)
+mesh = SubResource("BoxMesh_884vg")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Contents/UIMenuButton/MeshInstance3D"]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 0.5, 0, 0.459895, 0)
+mesh = SubResource("BoxMesh_8dd11")
+skeleton = NodePath("../..")
+
+[node name="InteractionArea" type="Area3D" parent="Contents/UIMenuButton"]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Contents/UIMenuButton/InteractionArea"]
+shape = SubResource("BoxShape3D_884vg")
+
+[node name="XRRigAttachment" type="Node" parent="."]
+script = ExtResource("2_8dd11")
+metadata/_custom_type_script = "uid://bgxltble43h6x"
+
+[connection signal="pressed" from="Contents/UIMenuButton" to="Contents/UIMenuButton/MeshInstance3D" method="set_visible" binds= [false]]

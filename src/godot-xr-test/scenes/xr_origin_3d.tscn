@@ -1,17 +1,23 @@
-[gd_scene load_steps=12 format=3 uid="uid://be3xnhmmb0v3j"]
+[gd_scene load_steps=13 format=3 uid="uid://be3xnhmmb0v3j"]
 
+[ext_resource type="Script" uid="uid://c5ja1fnfgrodr" path="res://scripts/xr_rig.gd" id="1_4hrip"]
 [ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="2_hg5dl"]
 [ext_resource type="Material" uid="uid://byabtrj56ihu" path="res://assets/materials/hand_shader.tres" id="2_j2fxx"]
 [ext_resource type="PackedScene" uid="uid://bufelcry36rw1" path="res://addons/xr-autohandtracker/auto_handtracker.tscn" id="4_4hrip"]
-[ext_resource type="Script" uid="uid://dayu5anlgov04" path="res://scripts/follow_wrist.gd" id="4_g4cwv"]
 [ext_resource type="PackedScene" uid="uid://bdkstolm7rlft" path="res://assets/models/valve_hand/vr_glove_right_model_slim_v9.fbx" id="5_2ofhi"]
-[ext_resource type="Script" uid="uid://dh7yme5a7c6eg" path="res://scripts/fps_label.gd" id="5_hg5dl"]
 [ext_resource type="Script" uid="uid://d3u7st03gfs8h" path="res://scripts/hand_interaction_manager.gd" id="6_xllm5"]
 [ext_resource type="Script" uid="uid://0if0m2ftvto7" path="res://scripts/gaze_selection.gd" id="7_tydbt"]
 [ext_resource type="Script" uid="uid://bftg045hnrand" path="res://scripts/interaction_zone_manager.gd" id="9_dd1ma"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_j2fxx"]
-size = Vector3(0.03, 0.03, 0.03)
+[sub_resource type="SphereShape3D" id="SphereShape3D_hg5dl"]
+radius = 0.005
+
+[sub_resource type="SphereMesh" id="SphereMesh_hg5dl"]
+radius = 0.005
+height = 0.01
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_dd1ma"]
+radius = 0.005
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dd1ma"]
 transparency = 1
@@ -19,6 +25,7 @@ depth_draw_mode = 1
 albedo_color = Color(0.956863, 0.180392, 0.529412, 0.262745)
 
 [node name="XROrigin3D" type="XROrigin3D"]
+script = ExtResource("1_4hrip")
 
 [node name="XRCamera3D" type="XRCamera3D" parent="."]
 
@@ -48,32 +55,36 @@ bones/23/position = Vector3(-1.00614e-16, 1.57173e-09, -0.0179785)
 bones/24/position = Vector3(2.08167e-17, 1.57518e-09, -0.0180179)
 bones/24/rotation = Quaternion(7.21645e-16, 6.38378e-16, -3.40006e-16, 1)
 
-[node name="vr_glove_left_slim" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="0"]
+[node name="AttachmentPointWrist" type="BoneAttachment3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="0"]
+transform = Transform3D(0, -1, 0, 1, 0, -8.74228e-08, 8.74228e-08, 0, 1, -0.000159787, -3.19244e-05, 0.000625709)
+bone_name = "Wrist_L"
+bone_idx = 0
+
+[node name="PointerFingerTip" type="BoneAttachment3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="1"]
+transform = Transform3D(0.19221, -0.669965, -0.717079, 0.977075, 0.19881, 0.0761529, 0.0915428, -0.715277, 0.69282, 0.0345977, 0.0355404, -0.164767)
+bone_name = "Index_Tip_L"
+bone_idx = 9
+
+[node name="AnimatableBody3D" type="AnimatableBody3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D/PointerFingerTip"]
+collision_layer = 2
+collision_mask = 0
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D/PointerFingerTip/AnimatableBody3D"]
+shape = SubResource("SphereShape3D_hg5dl")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D/PointerFingerTip/AnimatableBody3D"]
+transform = Transform3D(1, -1.49012e-08, -7.45058e-09, 7.45058e-09, 1, 0, 7.45058e-09, 0, 1, 0, 0, 0)
+visible = false
+mesh = SubResource("SphereMesh_hg5dl")
+skeleton = NodePath("../..")
+
+[node name="vr_glove_left_slim" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="2"]
 surface_material_override/0 = ExtResource("2_j2fxx")
 
 [node name="AutoHandtracker" parent="LeftXRNode3D" instance=ExtResource("4_4hrip")]
 visiblehandtrackskeleton = false
 enableautotracker = false
-
-[node name="AttachmentPointWrist" type="Node3D" parent="LeftXRNode3D"]
-
-[node name="Node3D" type="Node3D" parent="LeftXRNode3D/AttachmentPointWrist"]
-
-[node name="FPSLabel" type="Label3D" parent="LeftXRNode3D/AttachmentPointWrist/Node3D"]
-transform = Transform3D(0.025, 0, 0, 0, 0.025, 0, 0, 0, 0.025, 0, 0, 0)
-font_size = 60
-outline_size = 2
-script = ExtResource("5_hg5dl")
-metadata/_custom_type_script = "uid://dh7yme5a7c6eg"
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftXRNode3D/AttachmentPointWrist"]
-visible = false
-mesh = SubResource("BoxMesh_j2fxx")
-
-[node name="FollowWrist" type="Node" parent="LeftXRNode3D/AttachmentPointWrist"]
-script = ExtResource("4_g4cwv")
-offset = Vector3(0, 0.02, 0.02)
-metadata/_custom_type_script = "uid://dayu5anlgov04"
 
 [node name="RightXRNode3D" type="XRController3D" parent="."]
 tracker = &"right_hand"
@@ -89,7 +100,31 @@ bones/17/position = Vector3(2.67261e-09, -9.80847e-10, -0.0403312)
 bones/18/position = Vector3(-7.21517e-08, 3.48773e-09, -0.0284888)
 bones/19/rotation = Quaternion(-8.46545e-16, -4.54498e-15, -4.94743e-15, 1)
 
-[node name="vr_glove_right_slim" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="0"]
+[node name="AttachmentPointWrist" type="BoneAttachment3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="0"]
+transform = Transform3D(0, 1, 0, -1, 0, 8.74228e-08, 8.74228e-08, 0, 1, 0.000159787, -3.19245e-05, 0.000625709)
+bone_name = "Wrist_R"
+bone_idx = 0
+
+[node name="PointerFingerTip" type="BoneAttachment3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="1"]
+transform = Transform3D(0.19221, 0.669965, 0.717078, -0.977075, 0.19881, 0.0761529, -0.0915429, -0.715277, 0.69282, -0.0345976, 0.0355404, -0.164767)
+bone_name = "Index_Tip_L"
+bone_idx = 9
+
+[node name="AnimatableBody3D" type="AnimatableBody3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D/PointerFingerTip"]
+collision_layer = 2
+collision_mask = 0
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D/PointerFingerTip/AnimatableBody3D"]
+shape = SubResource("SphereShape3D_dd1ma")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D/PointerFingerTip/AnimatableBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 2.98023e-08, -7.45058e-09, -2.98023e-08, 1, 0, 0, 0)
+visible = false
+mesh = SubResource("SphereMesh_hg5dl")
+skeleton = NodePath("../..")
+
+[node name="vr_glove_right_slim" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="2"]
 surface_material_override/0 = ExtResource("2_j2fxx")
 
 [node name="AutoHandtracker" parent="RightXRNode3D" instance=ExtResource("4_4hrip")]
