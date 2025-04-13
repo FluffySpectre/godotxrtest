@@ -8,4 +8,3 @@ func _ready() -> void:
 
 func _on_focus_gained() -> void:
   xr_manager.instance.switch_to_ar()
-  

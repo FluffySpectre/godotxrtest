@@ -111,10 +111,7 @@ metadata/_custom_type_script = "uid://0if0m2ftvto7"
 script = ExtResource("9_dd1ma")
 xr_camera = NodePath("../XRCamera3D")
 hand_interaction_manager = NodePath("../HandInteractionManager")
-visualize_zone = false
 zone_material = SubResource("StandardMaterial3D_dd1ma")
-debug_mode = false
-show_hand_markers = false
 metadata/_custom_type_script = "uid://bftg045hnrand"
 
 [editable path="LeftXRNode3D/vr_glove_left_model_slim_v9"]
