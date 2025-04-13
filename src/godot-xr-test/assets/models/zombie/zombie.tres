@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://dfpbumb840xwd"]
+
+[ext_resource type="Texture2D" uid="uid://bu5ovl30gsxq4" path="res://assets/models/zombie/zombie_model.png" id="1_tpmk5"]
+
+[resource]
+albedo_texture = ExtResource("1_tpmk5")
+metallic = 0.11
+roughness = 0.65

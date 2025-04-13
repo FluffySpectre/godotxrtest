@@ -1,0 +1,43 @@
+[gd_scene load_steps=9 format=3 uid="uid://cvuai77nqypks"]
+
+[ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_23kg1"]
+[ext_resource type="PackedScene" uid="uid://d2amne32a6ucd" path="res://assets/models/zombie/character_base.FBX" id="2_3c0w3"]
+[ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="3_71ieh"]
+[ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="4_7db4d"]
+[ext_resource type="Material" uid="uid://bprraxubu53yv" path="res://assets/materials/interaction_wireframe_area.tres" id="5_8levf"]
+[ext_resource type="Material" uid="uid://c6dtlgo8toq3w" path="res://assets/materials/interaction_area.tres" id="6_6ewu1"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_efxa6"]
+size = Vector3(0.940025, 1.9007, 0.541047)
+
+[sub_resource type="BoxMesh" id="BoxMesh_efxa6"]
+material = ExtResource("6_6ewu1")
+
+[node name="InteractableObjectZombie" type="Node3D"]
+script = ExtResource("1_23kg1")
+metadata/_custom_type_script = "uid://bd4ss8ud3hrk6"
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="character_base" parent="Model" instance=ExtResource("2_3c0w3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0221499, 0)
+
+[node name="GroundDetection" type="RayCast3D" parent="."]
+script = ExtResource("3_71ieh")
+metadata/_custom_type_script = "uid://bt8ikstfac4bg"
+
+[node name="InteractionArea" type="Node3D" parent="."]
+
+[node name="InteractionAreaInner" type="Area3D" parent="InteractionArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.559742, 0)
+script = ExtResource("4_7db4d")
+interaction_area_material = ExtResource("5_8levf")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea/InteractionAreaInner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00152904, 0.309467, 0.00715673)
+shape = SubResource("BoxShape3D_efxa6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="InteractionArea/InteractionAreaInner"]
+transform = Transform3D(0.940025, 0, 0, 0, 1.9007, 0, 0, 0, 0.541047, 0.00152904, 0.309467, 0.00715673)
+visible = false
+mesh = SubResource("BoxMesh_efxa6")

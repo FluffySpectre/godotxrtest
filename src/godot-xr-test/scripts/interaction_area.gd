@@ -48,3 +48,4 @@ func set_highlight(highlight: bool) -> void:
 func _setup_wireframe_box() -> void:
   _wireframe_box = WireframeBox.new(interaction_area_material, _interaction_area_mesh.scale)
   add_child(_wireframe_box)
+  _wireframe_box.global_position = _interaction_area_mesh.global_position
