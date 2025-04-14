@@ -10,8 +10,8 @@ func _ready() -> void:
 func get_attachment_point_node(attachment_point: AttachmentPoint) -> Node3D:
   if attachment_point == AttachmentPoint.LEFT_HAND:
     var xr_node = $LeftXRNode3D
-    return xr_node.find_child("AttachmentPointWrist")
+    return xr_node.find_child("AttachmentPoint")
   elif attachment_point == AttachmentPoint.RIGHT_HAND:
     var xr_node = $RightXRNode3D
-    return xr_node.find_child("AttachmentPointWrist")
+    return xr_node.find_child("AttachmentPoint")
   return null

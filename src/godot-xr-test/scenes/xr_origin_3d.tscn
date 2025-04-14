@@ -55,10 +55,10 @@ bones/23/position = Vector3(-1.00614e-16, 1.57173e-09, -0.0179785)
 bones/24/position = Vector3(2.08167e-17, 1.57518e-09, -0.0180179)
 bones/24/rotation = Quaternion(7.21645e-16, 6.38378e-16, -3.40006e-16, 1)
 
-[node name="AttachmentPointWrist" type="BoneAttachment3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="0"]
-transform = Transform3D(0, -1, 0, 1, 0, -8.74228e-08, 8.74228e-08, 0, 1, -0.000159787, -3.19244e-05, 0.000625709)
-bone_name = "Wrist_L"
-bone_idx = 0
+[node name="AttachmentPoint" type="BoneAttachment3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="0"]
+transform = Transform3D(0.083606, -0.97618, 0.200206, 0.996362, 0.0785602, -0.0330306, 0.0165155, 0.20224, 0.979197, -0.00943297, 0.00825831, -0.0503986)
+bone_name = "Palm_L"
+bone_idx = 25
 
 [node name="PointerFingerTip" type="BoneAttachment3D" parent="LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D" index="1"]
 transform = Transform3D(0.19221, -0.669965, -0.717079, 0.977075, 0.19881, 0.0761529, 0.0915428, -0.715277, 0.69282, 0.0345977, 0.0355404, -0.164767)
@@ -100,10 +100,10 @@ bones/17/position = Vector3(2.67261e-09, -9.80847e-10, -0.0403312)
 bones/18/position = Vector3(-7.21517e-08, 3.48773e-09, -0.0284888)
 bones/19/rotation = Quaternion(-8.46545e-16, -4.54498e-15, -4.94743e-15, 1)
 
-[node name="AttachmentPointWrist" type="BoneAttachment3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="0"]
-transform = Transform3D(0, 1, 0, -1, 0, 8.74228e-08, 8.74228e-08, 0, 1, 0.000159787, -3.19245e-05, 0.000625709)
-bone_name = "Wrist_R"
-bone_idx = 0
+[node name="AttachmentPoint" type="BoneAttachment3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="0"]
+transform = Transform3D(0.083606, 0.97618, -0.200207, -0.996362, 0.0785602, -0.0330306, -0.0165156, 0.20224, 0.979197, 0.00943303, 0.00825832, -0.0503985)
+bone_name = "Palm_R"
+bone_idx = 25
 
 [node name="PointerFingerTip" type="BoneAttachment3D" parent="RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D" index="1"]
 transform = Transform3D(0.19221, 0.669965, 0.717078, -0.977075, 0.19881, 0.0761529, -0.0915429, -0.715277, 0.69282, -0.0345976, 0.0355404, -0.164767)

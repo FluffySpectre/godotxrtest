@@ -7,6 +7,8 @@ signal scaling_started
 signal scaling_ended
 signal rotation_started(hand_name)
 signal rotation_ended(hand_name)
+signal selected
+signal selection_lost
 
 # Properties
 @export var can_scale: bool = true
@@ -51,6 +53,12 @@ func set_selected(selected: bool) -> void:
     return
       
   is_selected = selected
+  
+  # Emit signals
+  if is_selected:
+    emit_signal("selected")
+  else:
+    emit_signal("selection_lost")
   
   # Update visual feedback for selection
   #if is_selected:
@@ -144,6 +152,8 @@ func _update_hands_in_area() -> void:
               interaction_area.set_highlight(false)
 
 func _update_area_transform() -> void:
+  if !model:
+    return
   interaction_area.scale_area(model.scale.x)
   interaction_area.rotate_area(model.rotation)
 
