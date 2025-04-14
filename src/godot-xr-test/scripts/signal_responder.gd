@@ -12,7 +12,8 @@ enum ResponseActionType {
     LOAD_SCENE,          # Load a scene
     SPAWN_OBJECT,        # Spawn an object
     TELEPORT,            # Teleport an object
-    CUSTOM_FUNCTION      # Call a custom function
+    CUSTOM_FUNCTION,     # Call a custom function
+    TOGGLE_VIDEO_PLAYBACK # Toggle video player playback
 }
 
 @export_category("Event Response Configuration")
@@ -102,6 +103,13 @@ func _execute_action() -> void:
           target_node.callv(target_function, custom_args)
         else:
           target_node.call(target_function)
+          
+    ResponseActionType.TOGGLE_VIDEO_PLAYBACK:
+      if target_node and target_node is VideoStreamPlayer:
+        if target_node.is_playing():
+          target_node.pause()
+        else:
+          target_node.play()
 
 # Recursively apply material to all child meshes
 func _apply_material_to_children(node: Node, material: Material) -> void:
