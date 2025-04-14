@@ -13,7 +13,8 @@ enum ResponseActionType {
     SPAWN_OBJECT,        # Spawn an object
     TELEPORT,            # Teleport an object
     CUSTOM_FUNCTION,     # Call a custom function
-    TOGGLE_VIDEO_PLAYBACK # Toggle video player playback
+    TOGGLE_VIDEO_PLAYBACK, # Toggle video player playback
+    TOGGLE_MATERIALS     # Toggle between two materials
 }
 
 @export_category("Event Response Configuration")
@@ -24,6 +25,7 @@ enum ResponseActionType {
 @export_category("Action Targets")
 @export var target_node: Node
 @export var target_material: Material
+@export var target_material_2: Material
 @export var target_audio: AudioStream
 @export var target_animation: String
 @export var target_scene: PackedScene
@@ -38,6 +40,9 @@ enum ResponseActionType {
 @export var delay: float = 0.0      # Delay before action
 @export var apply_to_children: bool = true  # For CHANGE_MATERIAL - apply to all child meshes
 
+# State tracking
+var using_material_1: bool = false  # Track which material is active for toggle
+
 @onready var parent: Node = get_parent()
 
 func _ready() -> void:
@@ -47,7 +52,7 @@ func _ready() -> void:
   if parent.has_signal(signal_name):
     parent.connect(signal_name, _on_signal_received)
 
-func _on_signal_received(arg1=null, arg2=null, arg3=null, arg4=null) -> void:
+func _on_signal_received(_arg1=null, _arg2=null, _arg3=null, _arg4=null) -> void:
   if delay > 0:
     var timer = get_tree().create_timer(delay)
     timer.timeout.connect(_execute_action)
@@ -70,6 +75,21 @@ func _execute_action() -> void:
         if apply_to_children:
           _apply_material_to_children(target_node, target_material)
   
+    ResponseActionType.TOGGLE_MATERIALS:
+      if target_node:
+        # Determine which material to apply
+        var material_to_apply = target_material_2 if using_material_1 else target_material
+        
+        # Apply the material
+        if target_node is MeshInstance3D:
+          target_node.material_override = material_to_apply
+        
+        if apply_to_children:
+          _apply_material_to_children(target_node, material_to_apply)
+        
+        # Toggle the state for next time
+        using_material_1 = !using_material_1
+    
     ResponseActionType.PLAY_SOUND:
       if target_node is AudioStreamPlayer3D and target_audio:
         target_node.stream = target_audio

@@ -47,12 +47,12 @@ var cumulative_movement: float = 0.0
 var last_hand_positions: Dictionary = {"left": Vector3.ZERO, "right": Vector3.ZERO}
 var is_selected: bool = false
 
-func set_selected(selected: bool) -> void:
+func set_selected(selected_: bool) -> void:
   # Don't update if state is already correct
-  if is_selected == selected:
+  if is_selected == selected_:
     return
       
-  is_selected = selected
+  is_selected = selected_
   
   # Emit signals
   if is_selected:

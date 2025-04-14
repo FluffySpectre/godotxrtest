@@ -54,7 +54,7 @@ func _ready() -> void:
   interaction_area.body_entered.connect(_on_body_entered)
   interaction_area.body_exited.connect(_on_body_exited)
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
   if pressing_finger and is_hovering:
     _check_press_state()
 
