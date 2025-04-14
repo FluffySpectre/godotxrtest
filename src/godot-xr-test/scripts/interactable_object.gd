@@ -20,6 +20,14 @@ signal selection_lost
 @export var snap_to_ground: bool = false
 @export var rotation_threshold: float = 0.02  # Distance in meters before rotation starts
 
+# Sound Properties
+@export var move_sound: AudioStream  # Sound to play during movement
+@export var rotation_sound: AudioStream  # Sound to play during rotation  
+@export var scale_sound: AudioStream  # Sound to play during scaling
+@export var move_sound_interval: float = 0.1  # Distance in meters between sound clicks
+@export var rotation_sound_interval: float = 0.15  # Radians between sound clicks
+@export var scale_sound_interval: float = 0.1  # Scale factor change between sound clicks
+
 # References
 @onready var model = $Model
 @onready var hand_tracking_manager: HandInteractionManager = $"/root/Main/XROrigin3D/HandInteractionManager"
@@ -46,6 +54,15 @@ var hands_in_area: Dictionary = {"left": false, "right": false}  # Track which h
 var cumulative_movement: float = 0.0
 var last_hand_positions: Dictionary = {"left": Vector3.ZERO, "right": Vector3.ZERO}
 var is_selected: bool = false
+
+# Sound tracking variables
+var sound_player: AudioStreamPlayer3D
+var move_distance_accumulated: float = 0.0
+var rotation_accumulated: float = 0.0
+var scale_change_accumulated: float = 0.0
+var last_position: Vector3 = Vector3.ZERO
+var last_rotation: float = 0.0
+var last_scale: float = 1.0
 
 func set_selected(selected_: bool) -> void:
   # Don't update if state is already correct
@@ -77,6 +94,16 @@ func _ready() -> void:
   # Store initial scale
   if model:
     initial_scale = model.scale.x
+    last_scale = initial_scale
+  
+  # Initialize position and rotation tracking for sound effects
+  last_position = global_transform.origin
+  if model:
+    last_rotation = model.rotation.y
+  
+  # Setup sound
+  if has_node("SoundPlayer"):
+    sound_player = get_node("SoundPlayer")
   
   print("Interactable object initialized: ", name)
   print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate)
@@ -229,6 +256,10 @@ func _start_movement(hand_name) -> void:
   initial_pinch_position = last_hand_positions[hand_name]
   initial_object_position = global_transform.origin
   
+  # Reset sound tracking
+  move_distance_accumulated = 0.0
+  last_position = global_transform.origin
+  
   print("Movement started with hand: ", hand_name)
   emit_signal("pinch_move_started", hand_name)
 
@@ -256,6 +287,10 @@ func _prepare_rotation(hand_name) -> void:
   initial_hand_x = initial_pinch_position.x
   last_hand_x = initial_hand_x
   initial_object_rotation = model.rotation.y
+  
+  # Reset sound tracking
+  rotation_accumulated = 0.0
+  last_rotation = model.rotation.y
   
   print("Rotation prepared with hand: ", hand_name)
   print("Initial hand X: ", initial_hand_x)
@@ -293,6 +328,10 @@ func _start_scaling() -> void:
   if model:
     initial_scale = model.scale.x
   
+  # Reset sound tracking
+  scale_change_accumulated = 0.0
+  last_scale = initial_scale
+  
   print("Scaling started with initial distance: ", initial_distance)
   emit_signal("scaling_started")
 
@@ -312,6 +351,11 @@ func _reset_all_modes() -> void:
   movement_started = false
   is_rotation_active = false
   active_hand = ""
+  
+  # Reset sound tracking variables
+  move_distance_accumulated = 0.0
+  rotation_accumulated = 0.0
+  scale_change_accumulated = 0.0
 
 func _update_position() -> void:
   if !is_moving or !active_hand or !last_hand_positions.has(active_hand):
@@ -321,7 +365,21 @@ func _update_position() -> void:
   var movement_vector = current_hand_position - initial_pinch_position
   
   # Apply movement directly
-  global_transform.origin = initial_object_position + movement_vector
+  var new_position = initial_object_position + movement_vector
+  global_transform.origin = new_position
+  
+  # Check for sound trigger
+  if last_position != Vector3.ZERO:
+    var movement_distance = last_position.distance_to(new_position)
+    move_distance_accumulated += movement_distance
+    
+    # Play sound at regular intervals
+    if move_distance_accumulated >= move_sound_interval:
+      _play_move_sound()
+      # Keep remainder for smoother timing
+      move_distance_accumulated = fmod(move_distance_accumulated, move_sound_interval)
+  
+  last_position = new_position
 
 func _update_rotation(delta) -> void:
   if !is_rotating or !is_rotation_active or !active_hand or !last_hand_positions.has(active_hand):
@@ -344,9 +402,21 @@ func _update_rotation(delta) -> void:
   # Use the angle for rotation, with proper delta time and sensitivity
   if model:
     var rotation_amount = angle * rotation_speed * delta
-    model.rotation.y = initial_object_rotation + rotation_amount
+    var new_rotation = initial_object_rotation + rotation_amount
+    model.rotation.y = new_rotation
     
-    #print("Rotating: angle=", rad_to_deg(angle), " new rotation=", model.rotation.y)
+    # Check for sound trigger
+    if last_rotation != 0.0:
+      var rotation_change = abs(new_rotation - last_rotation)
+      rotation_accumulated += rotation_change
+      
+      # Play sound at regular intervals
+      if rotation_accumulated >= rotation_sound_interval:
+        _play_rotation_sound()
+        # Keep remainder for smoother timing
+        rotation_accumulated = fmod(rotation_accumulated, rotation_sound_interval)
+    
+    last_rotation = new_rotation
      
 func _update_scale() -> void:
   if !is_scaling or !model:
@@ -366,6 +436,19 @@ func _update_scale() -> void:
   
   # Apply uniform scaling
   model.scale = Vector3(new_scale, new_scale, new_scale)
+  
+  # Check for sound trigger
+  if last_scale != 0.0:
+    var scale_change = abs(new_scale - last_scale)
+    scale_change_accumulated += scale_change
+    
+    # Play sound at regular intervals
+    if scale_change_accumulated >= scale_sound_interval:
+      _play_scale_sound()
+      # Keep remainder for smoother timing
+      scale_change_accumulated = fmod(scale_change_accumulated, scale_sound_interval)
+  
+  last_scale = new_scale
 
 func _snap_to_ground() -> void:
   # Cast a ray downward from the object
@@ -378,3 +461,18 @@ func _snap_to_ground() -> void:
       collision_point.y + (model.scale.y * 0.5),
       current_pos.z
     )
+
+func _play_move_sound() -> void:
+  if sound_player && move_sound:
+    sound_player.stream = move_sound
+    sound_player.play()
+
+func _play_rotation_sound() -> void:
+  if sound_player and rotation_sound:
+    sound_player.stream = rotation_sound
+    sound_player.play()
+
+func _play_scale_sound() -> void:
+  if sound_player and scale_sound:
+    sound_player.stream = scale_sound
+    sound_player.play()
