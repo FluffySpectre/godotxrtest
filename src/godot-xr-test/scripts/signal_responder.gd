@@ -21,7 +21,7 @@ enum ResponseActionType {
 
 # Target configuration
 @export_category("Action Targets")
-@export var target_node_path: NodePath
+@export var target_node: Node
 @export var target_material: Material
 @export var target_audio: AudioStream
 @export var target_animation: String
@@ -35,15 +35,16 @@ enum ResponseActionType {
 @export_category("Action Parameters")
 @export var show: bool = true       # For SHOW_HIDE
 @export var delay: float = 0.0      # Delay before action
+@export var apply_to_children: bool = true  # For CHANGE_MATERIAL - apply to all child meshes
 
-@onready var _parent: Node = get_parent()
+@onready var parent: Node = get_parent()
 
 func _ready() -> void:
   if signal_name.is_empty():
     return
   
-  if _parent.has_signal(signal_name):
-    _parent.connect(signal_name, _on_signal_received)
+  if parent.has_signal(signal_name):
+    parent.connect(signal_name, _on_signal_received)
 
 func _on_signal_received(arg1=null, arg2=null, arg3=null, arg4=null) -> void:
   if delay > 0:
@@ -55,33 +56,27 @@ func _on_signal_received(arg1=null, arg2=null, arg3=null, arg4=null) -> void:
 func _execute_action() -> void:
   match action_type:
     ResponseActionType.SHOW_HIDE:
-      if target_node_path:
-        var target_node = get_node(target_node_path)
-        target_node.visible = show
+      target_node.visible = show
                 
     ResponseActionType.TOGGLE_VISIBILITY:
-      if target_node_path:
-        var target_node = get_node(target_node_path)
-        target_node.visible = !target_node.visible
+      target_node.visible = !target_node.visible
                 
     ResponseActionType.CHANGE_MATERIAL:
-      if target_node_path:
-        var target_node = get_node(target_node_path)
-        if target_node is MeshInstance3D and target_material:
+      if target_node:
+        if target_node is MeshInstance3D:
           target_node.material_override = target_material
+        
+        if apply_to_children:
+          _apply_material_to_children(target_node, target_material)
   
     ResponseActionType.PLAY_SOUND:
-      if target_node_path:
-        var target_node = get_node(target_node_path)
-        if target_node is AudioStreamPlayer3D and target_audio:
-          target_node.stream = target_audio
-          target_node.play()
+      if target_node is AudioStreamPlayer3D and target_audio:
+        target_node.stream = target_audio
+        target_node.play()
                 
     ResponseActionType.PLAY_ANIMATION:
-      if target_node_path:
-        var target_node = get_node(target_node_path)
-        if target_node is AnimationPlayer and target_animation:
-          target_node.play(target_animation)
+      if target_node is AnimationPlayer and target_animation:
+        target_node.play(target_animation)
                 
     ResponseActionType.EMIT_PARTICLES:
       if target_particles:
@@ -98,16 +93,22 @@ func _execute_action() -> void:
         instance.global_position = target_position.global_position
                 
     ResponseActionType.TELEPORT:
-      if target_node_path:
-        var target_node = get_node(target_node_path)
-        if target_node and target_position:
-          target_node.global_position = target_position.global_position
-                
+      if target_node and target_position:
+        target_node.global_position = target_position.global_position
+    
     ResponseActionType.CUSTOM_FUNCTION:
-      if target_node_path:
-        var target_node = get_node(target_node_path)
-        if target_node and target_function and target_node.has_method(target_function):
-          if custom_args.size() > 0:
-            target_node.callv(target_function, custom_args)
-          else:
-            target_node.call(target_function)
+      if target_node and target_function and target_node.has_method(target_function):
+        if custom_args.size() > 0:
+          target_node.callv(target_function, custom_args)
+        else:
+          target_node.call(target_function)
+
+# Recursively apply material to all child meshes
+func _apply_material_to_children(node: Node, material: Material) -> void:
+  for child in node.get_children():
+    if child is MeshInstance3D:
+      child.material_override = material
+    
+    # Continue recursion if the child has children
+    if child.get_child_count() > 0:
+      _apply_material_to_children(child, material)
