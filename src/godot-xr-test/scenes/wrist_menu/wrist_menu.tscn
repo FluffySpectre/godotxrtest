@@ -6,7 +6,7 @@
 [node name="WristMenu" type="Node3D"]
 
 [node name="Contents" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0275327, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0419881, 0)
 
 [node name="PokeButton" parent="Contents" instance=ExtResource("2_gty6n")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00285826, 0, 0.0166512)

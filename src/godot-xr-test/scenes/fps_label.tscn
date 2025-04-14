@@ -6,7 +6,7 @@
 [node name="FPSLabel" type="Node3D"]
 
 [node name="Contents" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0, 0.015)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.015, 0.015)
 
 [node name="Label" type="Label3D" parent="Contents"]
 transform = Transform3D(0, 0.025, 2.18557e-09, -0.025, 0, 0, 0, -2.18557e-09, 0.025, 0.0252858, 0.0266731, 0.000826429)
