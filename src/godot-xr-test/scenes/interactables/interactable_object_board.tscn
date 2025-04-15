@@ -1,7 +1,7 @@
 [gd_scene load_steps=14 format=3 uid="uid://ts2cd3b53s6t"]
 
 [ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_gf2i2"]
-[ext_resource type="VideoStream" uid="uid://cjhcht6rn52kw" path="res://assets/videos/video.ogv" id="2_hnoei"]
+[ext_resource type="VideoStream" uid="uid://cjhcht6rn52kw" path="res://assets/videos/video.ogv" id="2_far64"]
 [ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="2_jnoya"]
 [ext_resource type="Material" uid="uid://dyjsf4bwpms15" path="res://assets/materials/board_frame.tres" id="2_p2exx"]
 [ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="3_p2exx"]
@@ -30,11 +30,12 @@ material = ExtResource("5_qc1tg")
 
 [node name="InteractableObjectBoard" type="Node3D"]
 script = ExtResource("1_gf2i2")
+metadata/not_gatherable = true
 
 [node name="Model" type="Node3D" parent="."]
 
 [node name="SubViewport" type="SubViewport" parent="Model"]
-size = Vector2i(1920, 1080)
+size = Vector2i(1280, 720)
 
 [node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="Model/SubViewport"]
 anchors_preset = 15
@@ -42,7 +43,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-stream = ExtResource("2_hnoei")
+stream = ExtResource("2_far64")
 autoplay = true
 expand = true
 loop = true

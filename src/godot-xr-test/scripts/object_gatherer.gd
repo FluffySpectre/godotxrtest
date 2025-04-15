@@ -36,8 +36,9 @@ func gather_objects() -> void:
   var main_scene = root.get_child(root.get_child_count() - 1)
   
   # Find all direct children of the main scene that are InteractableObjects
+  # and are gatherable
   for child in main_scene.get_children():
-    if child is InteractableObject:
+    if child is InteractableObject && !(child.has_meta("not_gatherable") && child.get_meta("not_gatherable")):
       interactable_objects.append(child)
   
   # If we don't have any objects, exit early
