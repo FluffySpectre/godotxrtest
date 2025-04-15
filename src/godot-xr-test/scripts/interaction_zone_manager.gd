@@ -5,6 +5,8 @@ signal pinch_started(hand_name)
 signal pinch_ended(hand_name)
 signal grab_started(hand_name)
 signal grab_ended(hand_name)
+signal hand_pose_started(hand_name)
+signal hand_pose_ended(hand_name)
 
 # The XR camera (head) this zone is attached to
 @export var xr_camera: XRCamera3D
@@ -15,7 +17,7 @@ signal grab_ended(hand_name)
 # Cylinder parameters
 @export var cylinder_radius: float = 0.4  # Constant radius of the cylinder
 @export var cylinder_length: float = 1.5  # How far the cylinder extends
-@export var cylinder_min_distance: float = 0.2  # Minimum distance from camera
+@export var cylinder_min_distance: float = 0.15  # Minimum distance from camera
 
 # Whether to visualize the zone during runtime
 @export var visualize_zone: bool = false
@@ -213,6 +215,8 @@ func _connect_to_hand_manager() -> void:
   hand_interaction_manager.pinch_ended.connect(_filter_pinch_ended)
   hand_interaction_manager.grab_started.connect(_filter_grab_started)
   hand_interaction_manager.grab_ended.connect(_filter_grab_ended)
+  hand_interaction_manager.hand_pose_started.connect(_filter_hand_pose_started)
+  hand_interaction_manager.hand_pose_ended.connect(_filter_hand_pose_ended)
 
 # Signal filters
 func _filter_pinch_started(hand_name: String) -> void:
@@ -232,6 +236,15 @@ func _filter_grab_started(hand_name: String) -> void:
 
 func _filter_grab_ended(hand_name: String) -> void:
   emit_signal("grab_ended", hand_name)
+
+func _filter_hand_pose_started(hand_name: String) -> void:
+  if hands_in_zone.get(hand_name, false):
+    emit_signal("hand_pose_started", hand_name)
+  else:
+    print("Ignoring hand pose start from " + hand_name + " hand (outside interaction zone)")
+
+func _filter_hand_pose_ended(hand_name: String) -> void:
+  emit_signal("hand_pose_ended", hand_name)
 
 # Debug visualization
 func _setup_debug_markers() -> void:

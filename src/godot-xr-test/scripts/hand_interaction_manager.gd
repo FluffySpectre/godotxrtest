@@ -4,6 +4,8 @@ signal pinch_started(hand_name)
 signal pinch_ended(hand_name)
 signal grab_started(hand_name)
 signal grab_ended(hand_name)
+signal hand_pose_started(hand_name)
+signal hand_pose_ended(hand_name)
 
 # References to hand controllers
 @export var left_controller: XRController3D
@@ -14,10 +16,14 @@ var left_pinching = false
 var right_pinching = false
 var left_grabbing = false
 var right_grabbing = false
+var left_hand_pose_active = false
+var right_hand_pose_active = false
 
 # Gesture thresholds
 const PINCH_THRESHOLD = 0.7
 const GRAB_THRESHOLD = 0.8
+const GRAB_OPEN_FOR_HAND = 0.15
+const GRAB_CLOSE_FOR_HAND = 0.3
 
 # Action paths for hand tracking
 const LEFT_PINCH_PATH = "pinch"
@@ -27,6 +33,7 @@ const RIGHT_GRAB_PATH = "grip"
 
 func _process(_delta) -> void:
   _process_hand_gestures()
+  _check_hand_poses()
 
 func _process_hand_gestures() -> void:
   # Get pinch and grab values using the OpenXR action map
@@ -43,9 +50,44 @@ func _process_hand_gestures() -> void:
   _process_grab_gesture("left", left_grab_value)
   _process_grab_gesture("right", right_grab_value)
 
+func _check_hand_poses() -> void:
+  _check_hand_pose("left")
+  _check_hand_pose("right")
+
+func _check_hand_pose(hand_name: String) -> void:
+  var controller = left_controller if hand_name == "left" else right_controller
+  var currently_active = hand_name == "left" and left_hand_pose_active or hand_name == "right" and right_hand_pose_active
+  
+  if not controller:
+    return
+  
+  # Get the grab value to ensure the hand is open
+  var grab_value = _get_action_value(controller, LEFT_GRAB_PATH if hand_name == "left" else RIGHT_GRAB_PATH)
+  var hand_is_open = (!currently_active and grab_value <= GRAB_OPEN_FOR_HAND) || (currently_active and grab_value <= GRAB_CLOSE_FOR_HAND)
+
+  var back_of_hand_facing_camera = hand_is_open
+
+  # Detect hand pose started
+  if back_of_hand_facing_camera and not currently_active:
+    if hand_name == "left":
+      left_hand_pose_active = true
+    else:
+      right_hand_pose_active = true
+    emit_signal("hand_pose_started", hand_name)
+    print("Hand back pose started: ", hand_name)
+  
+  # Detect hand pose ended
+  elif not back_of_hand_facing_camera and currently_active:
+    if hand_name == "left":
+      left_hand_pose_active = false
+    else:
+      right_hand_pose_active = false
+    emit_signal("hand_pose_ended", hand_name)
+    print("Hand back pose ended: ", hand_name)
+
 func _get_action_value(controller, action_path) -> float:
   if controller:
-    # Try to get float input - this works with the OpenXR action map
+    # Try to get float input
     if controller.has_method("get_float"):
       return controller.get_float(action_path)
   return 0.0
