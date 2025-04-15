@@ -25,8 +25,8 @@ signal selection_lost
 @export var enable_flick: bool = true
 @export var flick_speed_threshold: float = 0.5  # Minimum hand speed to trigger flick (m/s)
 @export var flick_force_multiplier: float = 1.0  # How much force to apply
-@export var flick_deceleration: float = 3.0  # How quickly flick slows down (higher = faster stop)
-@export var flick_max_distance: float = 1.0  # Maximum distance object can travel from flick
+@export var flick_deceleration: float = 5.0  # How quickly flick slows down (higher = faster stop)
+@export var flick_max_distance: float = 2.0  # Maximum distance object can travel from flick
 
 # Sound Properties
 @export_group("Sound Settings")
