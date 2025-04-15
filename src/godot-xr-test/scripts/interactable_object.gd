@@ -20,7 +20,16 @@ signal selection_lost
 @export var snap_to_ground: bool = false
 @export var rotation_threshold: float = 0.02  # Distance in meters before rotation starts
 
+# Flick Properties
+@export_group("Flick Settings")
+@export var enable_flick: bool = true
+@export var flick_speed_threshold: float = 0.5  # Minimum hand speed to trigger flick (m/s)
+@export var flick_force_multiplier: float = 1.0  # How much force to apply
+@export var flick_deceleration: float = 3.0  # How quickly flick slows down (higher = faster stop)
+@export var flick_max_distance: float = 1.0  # Maximum distance object can travel from flick
+
 # Sound Properties
+@export_group("Sound Settings")
 @export var move_sound: AudioStream  # Sound to play during movement
 @export var rotation_sound: AudioStream  # Sound to play during rotation  
 @export var scale_sound: AudioStream  # Sound to play during scaling
@@ -54,6 +63,14 @@ var hands_in_area: Dictionary = {"left": false, "right": false}  # Track which h
 var cumulative_movement: float = 0.0
 var last_hand_positions: Dictionary = {"left": Vector3.ZERO, "right": Vector3.ZERO}
 var is_selected: bool = false
+
+# Flick state variables
+var flick_velocity: Vector3 = Vector3.ZERO   # Current flick velocity
+var flick_active: bool = false               # Whether object is currently in flick motion
+var hand_velocity: Vector3 = Vector3.ZERO    # Tracked hand velocity
+var previous_hand_position: Vector3 = Vector3.ZERO  # Previous frame's hand position
+var velocity_history: Array = []             # Store recent velocity samples
+var velocity_sample_count: int = 5           # Number of samples to average for smoother velocity
 
 # Sound tracking variables
 var sound_player: AudioStreamPlayer3D
@@ -108,6 +125,7 @@ func _ready() -> void:
   print("Interactable object initialized: ", name)
   print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate)
   print("Rotation threshold: ", rotation_threshold)
+  print("Flick enabled: ", enable_flick)
 
 func _process(delta) -> void:
   # Update hand positions
@@ -150,8 +168,13 @@ func _process(delta) -> void:
     _update_rotation(delta)
   
   # Apply ground snapping when not being manipulated
-  if snap_to_ground and !is_moving:
+  if snap_to_ground and !is_moving and !flick_active:
     _snap_to_ground()
+
+func _physics_process(delta) -> void:
+  # Handle flick physics if active
+  if flick_active and enable_flick:
+    _update_flick_movement(delta)
 
 func _update_hand_positions() -> void:
   # Keep track of hand positions for calculations
@@ -255,6 +278,11 @@ func _start_movement(hand_name) -> void:
   # Store initial positions
   initial_pinch_position = last_hand_positions[hand_name]
   initial_object_position = global_transform.origin
+  previous_hand_position = Vector3.ZERO
+  
+  # Reset tracking
+  velocity_history.clear()
+  hand_velocity = Vector3.ZERO
   
   # Reset sound tracking
   move_distance_accumulated = 0.0
@@ -271,6 +299,20 @@ func _end_movement() -> void:
   movement_started = false
   var previous_hand = active_hand
   active_hand = ""
+  
+  # Check if we should apply flick
+  if enable_flick and hand_velocity.length() > flick_speed_threshold:
+    flick_velocity = hand_velocity * flick_force_multiplier
+    flick_active = true
+    print("Flick activated with velocity: ", flick_velocity)
+  else:
+    flick_velocity = Vector3.ZERO
+    flick_active = false
+  
+  # Reset velocity tracking
+  hand_velocity = Vector3.ZERO
+  previous_hand_position = Vector3.ZERO
+  velocity_history.clear()
   
   print("Movement ended")
   emit_signal("pinch_move_ended", previous_hand)
@@ -351,6 +393,8 @@ func _reset_all_modes() -> void:
   movement_started = false
   is_rotation_active = false
   active_hand = ""
+  flick_active = false
+  flick_velocity = Vector3.ZERO
   
   # Reset sound tracking variables
   move_distance_accumulated = 0.0
@@ -362,6 +406,25 @@ func _update_position() -> void:
     return
       
   var current_hand_position = last_hand_positions[active_hand]
+  
+  # Calculate hand velocity
+  if previous_hand_position != Vector3.ZERO:
+    var frame_velocity = (current_hand_position - previous_hand_position) / get_physics_process_delta_time()
+    
+    # Add to velocity history for smoothing
+    velocity_history.push_back(frame_velocity)
+    if velocity_history.size() > velocity_sample_count:
+      velocity_history.pop_front()
+      
+    # Calculate average velocity
+    hand_velocity = Vector3.ZERO
+    for vel in velocity_history:
+      hand_velocity += vel
+    hand_velocity /= velocity_history.size()
+  
+  # Store for next frame
+  previous_hand_position = current_hand_position
+  
   var movement_vector = current_hand_position - initial_pinch_position
   
   # Apply movement directly
@@ -380,6 +443,29 @@ func _update_position() -> void:
       move_distance_accumulated = fmod(move_distance_accumulated, move_sound_interval)
   
   last_position = new_position
+
+func _update_flick_movement(delta: float) -> void:
+  # Apply current flick velocity to position
+  global_transform.origin += flick_velocity * delta
+  
+  # Apply deceleration
+  var deceleration = flick_velocity.normalized() * flick_deceleration * delta
+  
+  # Ensure we don't overshoot zero
+  if deceleration.length() > flick_velocity.length():
+    flick_velocity = Vector3.ZERO
+    flick_active = false
+  else:
+    flick_velocity -= deceleration
+  
+  # Apply ground snapping if enabled
+  if snap_to_ground:
+    _snap_to_ground()
+    
+  # Check if we've traveled the maximum allowed distance
+  if flick_velocity.length_squared() < 0.01 or (initial_object_position.distance_to(global_transform.origin) > flick_max_distance):
+    flick_velocity = Vector3.ZERO
+    flick_active = false
 
 func _update_rotation(delta) -> void:
   if !is_rotating or !is_rotation_active or !active_hand or !last_hand_positions.has(active_hand):
