@@ -54,8 +54,13 @@ func gather_objects() -> void:
   var right_vector = forward_direction.cross(Vector3.UP)
   
   # Determine how to distribute objects
-  var start_angle = -arc_degrees / 2.0
   var angle_increment = min(spacing_degrees, arc_degrees / max(1, object_count - 1))
+  
+  # Calculate total angle span and center it
+  var total_angle_span = 0
+  if object_count > 1:
+    total_angle_span = angle_increment * (object_count - 1)
+  var start_angle = -total_angle_span / 2.0
   
   # Position each object
   for i in range(object_count):
@@ -71,14 +76,14 @@ func gather_objects() -> void:
     
     # Either animate or directly set the position
     if animate_movement:
-      _animate_object_movement(obj, target_position)
+      animate_object_movement(obj, target_position)
     else:
       obj.global_position = target_position
   
   # Emit signal when done
   emit_signal("gathering_complete")
 
-func _animate_object_movement(obj: InteractableObject, target_position: Vector3) -> void:
+func animate_object_movement(obj: InteractableObject, target_position: Vector3) -> void:
   # Create a tween to animate the movement
   var tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
   tween.tween_property(obj, "global_position", target_position, animation_duration)
