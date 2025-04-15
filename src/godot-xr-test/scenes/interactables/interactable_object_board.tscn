@@ -23,18 +23,20 @@ material = ExtResource("2_p2exx")
 size = Vector3(1, 0.55, 0.06)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hnoei"]
-size = Vector3(1.08286, 0.63332, 0.158436)
+size = Vector3(1.08286, 0.63332, 0.364348)
 
 [sub_resource type="BoxMesh" id="BoxMesh_hnoei"]
 material = ExtResource("5_qc1tg")
 
 [node name="InteractableObjectBoard" type="Node3D"]
 script = ExtResource("1_gf2i2")
+min_scale = 0.5
 metadata/not_gatherable = true
 
 [node name="Model" type="Node3D" parent="."]
 
 [node name="SubViewport" type="SubViewport" parent="Model"]
+handle_input_locally = false
 size = Vector2i(1280, 720)
 
 [node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="Model/SubViewport"]
@@ -64,14 +66,15 @@ metadata/_custom_type_script = "uid://bt8ikstfac4bg"
 [node name="InteractionArea" type="Node3D" parent="."]
 
 [node name="InteractionAreaInner" type="Area3D" parent="InteractionArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.282135, 0)
 script = ExtResource("3_p2exx")
 interaction_area_material = ExtResource("4_okan1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea/InteractionAreaInner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.272, -0.0151156)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0119858, -0.0160471)
 shape = SubResource("BoxShape3D_hnoei")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="InteractionArea/InteractionAreaInner"]
-transform = Transform3D(1.08286, 0, 0, 0, 0.63332, 0, 0, 0, 0.155581, 0, 0.272, -0.015)
+transform = Transform3D(1.08286, 0, 0, 0, 0.63332, 0, 0, 0, 0.364348, 0, -0.0119858, -0.0151156)
 visible = false
 mesh = SubResource("BoxMesh_hnoei")
