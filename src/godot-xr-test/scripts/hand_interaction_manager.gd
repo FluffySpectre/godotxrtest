@@ -22,8 +22,8 @@ var right_hand_pose_active = false
 # Gesture thresholds
 const PINCH_THRESHOLD = 0.7
 const GRAB_THRESHOLD = 0.8
-const GRAB_OPEN_FOR_HAND = 0.15
-const GRAB_CLOSE_FOR_HAND = 0.3
+const GRAB_OPEN_FOR_HAND = 0.2
+const GRAB_CLOSE_FOR_HAND = 0.4
 
 # Action paths for hand tracking
 const LEFT_PINCH_PATH = "pinch"
