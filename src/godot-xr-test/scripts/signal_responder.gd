@@ -4,6 +4,7 @@ class_name SignalResponder extends Node
 enum ResponseActionType {
     NONE,
     SHOW_HIDE,           # Show or hide a node
+    ENABLE_DISABLE,      # Enable of disable the processing of a node
     CHANGE_MATERIAL,     # Change material on a mesh
     PLAY_SOUND,          # Play an audio file
     PLAY_ANIMATION,      # Play an animation
@@ -36,7 +37,7 @@ enum ResponseActionType {
 
 # Action parameters
 @export_category("Action Parameters")
-@export var show: bool = true       # For SHOW_HIDE
+@export var show: bool = true       # For SHOW_HIDE and ENABLE_DISABLE
 @export var delay: float = 0.0      # Delay before action
 @export var apply_to_children: bool = true  # For CHANGE_MATERIAL - apply to all child meshes
 
@@ -63,7 +64,11 @@ func _execute_action() -> void:
   match action_type:
     ResponseActionType.SHOW_HIDE:
       target_node.visible = show
-                
+      
+    ResponseActionType.ENABLE_DISABLE:
+      target_node.visible = show
+      target_node.process_mode = PROCESS_MODE_INHERIT if show else PROCESS_MODE_DISABLED
+    
     ResponseActionType.TOGGLE_VISIBILITY:
       target_node.visible = !target_node.visible
                 

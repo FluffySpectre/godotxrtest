@@ -11,7 +11,7 @@
 [ext_resource type="Material" uid="uid://c6dtlgo8toq3w" path="res://assets/materials/interaction_area.tres" id="7_iaqoq"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_145dr"]
-size = Vector3(0.11125, 0.0317355, 0.116466)
+size = Vector3(0.130901, 0.0628655, 0.135562)
 
 [sub_resource type="BoxMesh" id="BoxMesh_5h1v4"]
 material = ExtResource("7_iaqoq")
@@ -19,6 +19,7 @@ material = ExtResource("7_iaqoq")
 [node name="WristMenu" type="Node3D"]
 
 [node name="Contents" type="Node3D" parent="."]
+process_mode = 4
 transform = Transform3D(0.335451, -0.821539, 0.461026, 0, 0.489382, 0.872069, -0.942057, -0.292537, 0.164164, 0.05, -0.02, -0.03)
 visible = false
 
@@ -63,7 +64,7 @@ script = ExtResource("5_6jhux")
 interaction_area_material = ExtResource("6_tuhqq")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="GazeTarget/InteractionArea/InteractionAreaInner"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05426, 0.00254859, -0.0705846)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0553379, 0.000900989, -0.0721396)
 shape = SubResource("BoxShape3D_145dr")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GazeTarget/InteractionArea/InteractionAreaInner"]
@@ -74,14 +75,14 @@ mesh = SubResource("BoxMesh_5h1v4")
 [node name="Show_SignalResponder" type="Node" parent="GazeTarget" node_paths=PackedStringArray("target_node")]
 script = ExtResource("5_6w1lc")
 signal_name = "selected"
-action_type = 1
+action_type = 2
 target_node = NodePath("../../Contents")
 metadata/_custom_type_script = "uid://qr2w4gdcybmm"
 
 [node name="Hide_SignalResponder" type="Node" parent="GazeTarget" node_paths=PackedStringArray("target_node")]
 script = ExtResource("5_6w1lc")
 signal_name = "selection_lost"
-action_type = 1
+action_type = 2
 target_node = NodePath("../../Contents")
 show = false
 metadata/_custom_type_script = "uid://qr2w4gdcybmm"
