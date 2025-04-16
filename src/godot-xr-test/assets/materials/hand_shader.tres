@@ -5,13 +5,13 @@
 [resource]
 render_priority = 0
 shader = ExtResource("1_4t3h5")
-shader_parameter/albedo = Color(0.721569, 0.72549, 0.705882, 0)
+shader_parameter/albedo = Color(0.165053, 0.167176, 0.156371, 0)
 shader_parameter/roughness = 0.5
 shader_parameter/metallic = 0.0
 shader_parameter/outline_color = Color(0.778484, 0.776468, 0.755597, 1)
-shader_parameter/outline_thickness = 0.045
-shader_parameter/outline_intensity = 1.901
+shader_parameter/outline_thickness = 0.038
+shader_parameter/outline_intensity = 1.623
 shader_parameter/fade_direction = Vector3(0, 0, 1)
-shader_parameter/fade_start = 0.33
-shader_parameter/fade_end = 0.51
+shader_parameter/fade_start = 0.35
+shader_parameter/fade_end = 0.5
 shader_parameter/enable_fade = true

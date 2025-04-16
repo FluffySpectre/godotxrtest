@@ -83,6 +83,7 @@ skeleton = NodePath("../..")
 surface_material_override/0 = ExtResource("2_j2fxx")
 
 [node name="AutoHandtracker" parent="LeftXRNode3D" instance=ExtResource("4_4hrip")]
+coincidewristorknuckle = false
 visiblehandtrackskeleton = false
 enableautotracker = false
 
@@ -128,6 +129,7 @@ skeleton = NodePath("../..")
 surface_material_override/0 = ExtResource("2_j2fxx")
 
 [node name="AutoHandtracker" parent="RightXRNode3D" instance=ExtResource("4_4hrip")]
+coincidewristorknuckle = false
 visiblehandtrackskeleton = false
 enableautotracker = false
 
