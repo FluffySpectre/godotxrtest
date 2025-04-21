@@ -1,21 +1,20 @@
 class_name SignalResponder extends Node
 
-# Response actions
 enum ResponseActionType {
-    NONE,
-    SHOW_HIDE,           # Show or hide a node
-    ENABLE_DISABLE,      # Enable of disable the processing of a node
-    CHANGE_MATERIAL,     # Change material on a mesh
-    PLAY_SOUND,          # Play an audio file
-    PLAY_ANIMATION,      # Play an animation
-    TOGGLE_VISIBILITY,   # Toggle visibility
-    EMIT_PARTICLES,      # Emit particles
-    LOAD_SCENE,          # Load a scene
-    SPAWN_OBJECT,        # Spawn an object
-    TELEPORT,            # Teleport an object
-    CUSTOM_FUNCTION,     # Call a custom function
-    TOGGLE_VIDEO_PLAYBACK, # Toggle video player playback
-    TOGGLE_MATERIALS     # Toggle between two materials
+    NONE,                  ## No action
+    SHOW_HIDE,             ## Show or hide a node
+    ENABLE_DISABLE,        ## Enable of disable the processing of a node
+    CHANGE_MATERIAL,       ## Change material on a mesh
+    PLAY_SOUND,            ## Play an audio file
+    PLAY_ANIMATION,        ## Play an animation
+    TOGGLE_VISIBILITY,     ## Toggle visibility
+    EMIT_PARTICLES,        ## Emit particles
+    LOAD_SCENE,            ## Load a scene
+    SPAWN_OBJECT,          ## Spawn an object
+    TELEPORT,              ## Teleport an object
+    CUSTOM_FUNCTION,       ## Call a custom function
+    TOGGLE_VIDEO_PLAYBACK, ## Toggle video player playback
+    TOGGLE_MATERIALS       ## Toggle between two materials
 }
 
 @export_category("Event Response Configuration")
@@ -37,21 +36,26 @@ enum ResponseActionType {
 
 # Action parameters
 @export_category("Action Parameters")
-@export var show: bool = true       # For SHOW_HIDE and ENABLE_DISABLE
-@export var delay: float = 0.0      # Delay before action
-@export var apply_to_children: bool = true  # For CHANGE_MATERIAL - apply to all child meshes
+## For SHOW_HIDE and ENABLE_DISABLE
+@export var show: bool = true
+
+## Delay before action
+@export var delay: float = 0.0
+
+## For CHANGE_MATERIAL - apply to all child meshes
+@export var apply_to_children: bool = true
+
+@onready var _parent: Node = get_parent()
 
 # State tracking
-var using_material_1: bool = false  # Track which material is active for toggle
-
-@onready var parent: Node = get_parent()
+var _using_material_1: bool = false
 
 func _ready() -> void:
   if signal_name.is_empty():
     return
   
-  if parent.has_signal(signal_name):
-    parent.connect(signal_name, _on_signal_received)
+  if _parent.has_signal(signal_name):
+    _parent.connect(signal_name, _on_signal_received)
 
 func _on_signal_received(_arg1=null, _arg2=null, _arg3=null, _arg4=null) -> void:
   if delay > 0:
@@ -83,7 +87,7 @@ func _execute_action() -> void:
     ResponseActionType.TOGGLE_MATERIALS:
       if target_node:
         # Determine which material to apply
-        var material_to_apply = target_material_2 if using_material_1 else target_material
+        var material_to_apply = target_material_2 if _using_material_1 else target_material
         
         # Apply the material
         if target_node is MeshInstance3D:
@@ -92,16 +96,15 @@ func _execute_action() -> void:
         if apply_to_children:
           _apply_material_to_children(target_node, material_to_apply)
         
-        # Toggle the state for next time
-        using_material_1 = !using_material_1
+        _using_material_1 = !_using_material_1
     
     ResponseActionType.PLAY_SOUND:
-      if target_node is AudioStreamPlayer3D and target_audio:
+      if target_node is AudioStreamPlayer3D && target_audio:
         target_node.stream = target_audio
         target_node.play()
                 
     ResponseActionType.PLAY_ANIMATION:
-      if target_node is AnimationPlayer and target_animation:
+      if target_node is AnimationPlayer && target_animation:
         target_node.play(target_animation)
                 
     ResponseActionType.EMIT_PARTICLES:
@@ -119,18 +122,18 @@ func _execute_action() -> void:
         instance.global_position = target_position.global_position
                 
     ResponseActionType.TELEPORT:
-      if target_node and target_position:
+      if target_node && target_position:
         target_node.global_position = target_position.global_position
     
     ResponseActionType.CUSTOM_FUNCTION:
-      if target_node and target_function and target_node.has_method(target_function):
+      if target_node && target_function && target_node.has_method(target_function):
         if custom_args.size() > 0:
           target_node.callv(target_function, custom_args)
         else:
           target_node.call(target_function)
           
     ResponseActionType.TOGGLE_VIDEO_PLAYBACK:
-      if target_node and target_node is VideoStreamPlayer:
+      if target_node && target_node is VideoStreamPlayer:
         if target_node.is_playing():
           target_node.pause()
         else:

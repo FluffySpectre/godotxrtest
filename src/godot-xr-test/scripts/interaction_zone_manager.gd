@@ -8,31 +8,30 @@ signal grab_ended(hand_name)
 signal hand_pose_started(hand_name)
 signal hand_pose_ended(hand_name)
 
-# The XR camera (head) this zone is attached to
+# References
 @export var xr_camera: XRCamera3D
-
-# Reference to the hand interaction manager
 @export var hand_interaction_manager: HandInteractionManager
 
-# Cylinder parameters
-@export var cylinder_radius: float = 0.4  # Constant radius of the cylinder
-@export var cylinder_length: float = 1.5  # How far the cylinder extends
-@export var cylinder_min_distance: float = 0.15  # Minimum distance from camera
+@export_group("Cylinder parameters")
+## Constant radius of the cylinder
+@export var cylinder_radius: float = 0.4
 
-# Whether to visualize the zone during runtime
+## How far the cylinder extends
+@export var cylinder_length: float = 1.5
+
+## Minimum distance from camera
+@export var cylinder_min_distance: float = 0.15
+
+@export_group("Visualization")
 @export var visualize_zone: bool = false
 @export var zone_material: Material
-
-# Visual debugging
 @export var debug_mode: bool = false
 @export var show_hand_markers: bool = false
 
 var _is_ready: bool = false
 var _cylinder_mesh: MeshInstance3D
 var _debug_hand_markers: Dictionary = {}
-
-# Variables to track which hands are inside the interaction zone
-var hands_in_zone: Dictionary = {"left": false, "right": false}
+var _hands_in_zone: Dictionary = {"left": false, "right": false}
 
 func _ready() -> void:
   # Setup visualization
@@ -40,7 +39,7 @@ func _ready() -> void:
     _setup_cylinder_visualization()
   
   # Setup debug if enabled
-  if debug_mode and show_hand_markers:
+  if debug_mode && show_hand_markers:
     _setup_debug_markers()
   
   # Connect to hand interaction manager
@@ -53,16 +52,16 @@ func _ready() -> void:
   print("Interaction Zone Manager initialized")
 
 func _process(_delta) -> void:
-  if _is_ready and xr_camera:
+  if _is_ready && xr_camera:
     # Update visualization position (cylinder follows camera)
-    if visualize_zone and _cylinder_mesh:
+    if visualize_zone && _cylinder_mesh:
       _update_cylinder_position()
     
     # Update hand positions and check if in zone
     _update_hands_in_zone()
     
     # Update debug markers
-    if debug_mode and show_hand_markers:
+    if debug_mode && show_hand_markers:
       _update_debug_markers()
 
 func _setup_cylinder_visualization() -> void:
@@ -92,7 +91,7 @@ func _setup_cylinder_visualization() -> void:
   _update_cylinder_position()
 
 func _update_cylinder_position() -> void:
-  if not xr_camera or not _cylinder_mesh:
+  if !xr_camera || !_cylinder_mesh:
     return
       
   # Get camera position and forward direction
@@ -133,7 +132,7 @@ func _update_cylinder_position() -> void:
   _cylinder_mesh.global_transform = cylinder_transform
 
 func _update_hands_in_zone() -> void:
-  if not hand_interaction_manager:
+  if !hand_interaction_manager:
     return
   
   # Check each hand position using our cylinder-based detection
@@ -141,7 +140,7 @@ func _update_hands_in_zone() -> void:
   _check_hand_in_zone("right")
 
 func _check_hand_in_zone(hand_name: String) -> void:
-  if not xr_camera or not hand_interaction_manager:
+  if !xr_camera || !hand_interaction_manager:
     return
       
   # Get the hand position
@@ -182,7 +181,7 @@ func _check_hand_in_zone(hand_name: String) -> void:
   
   # Debug info if enabled
   if debug_mode:
-    if is_in_zone != hands_in_zone.get(hand_name, false):
+    if is_in_zone != _hands_in_zone.get(hand_name, false):
       print(hand_name + " hand: " +
             "dist=" + str(projected_distance) + ", " +
             "perp=" + str(perpendicular_distance) + ", " +
@@ -191,15 +190,15 @@ func _check_hand_in_zone(hand_name: String) -> void:
 
 func _update_hand_zone_state(hand_name: String, is_in_zone: bool) -> void:
   # Only update if state changed
-  if is_in_zone != hands_in_zone.get(hand_name, false):
-    hands_in_zone[hand_name] = is_in_zone
+  if is_in_zone != _hands_in_zone.get(hand_name, false):
+    _hands_in_zone[hand_name] = is_in_zone
     if is_in_zone:
       print(hand_name, " hand entered interaction zone")
     else:
       print(hand_name, " hand exited interaction zone")
     
     # Update marker colors if debugging
-    if debug_mode and show_hand_markers and _debug_hand_markers.has(hand_name):
+    if debug_mode && show_hand_markers && _debug_hand_markers.has(hand_name):
       var marker = _debug_hand_markers[hand_name]
       var mat = marker.material_override as StandardMaterial3D
       if mat:
@@ -220,7 +219,7 @@ func _connect_to_hand_manager() -> void:
 
 # Signal filters
 func _filter_pinch_started(hand_name: String) -> void:
-  if hands_in_zone.get(hand_name, false):
+  if _hands_in_zone.get(hand_name, false):
     emit_signal("pinch_started", hand_name)
   else:
     print("Ignoring pinch start from " + hand_name + " hand (outside interaction zone)")
@@ -229,7 +228,7 @@ func _filter_pinch_ended(hand_name: String) -> void:
   emit_signal("pinch_ended", hand_name)
 
 func _filter_grab_started(hand_name: String) -> void:
-  if hands_in_zone.get(hand_name, false):
+  if _hands_in_zone.get(hand_name, false):
     emit_signal("grab_started", hand_name)
   else:
     print("Ignoring grab start from " + hand_name + " hand (outside interaction zone)")
@@ -238,7 +237,7 @@ func _filter_grab_ended(hand_name: String) -> void:
   emit_signal("grab_ended", hand_name)
 
 func _filter_hand_pose_started(hand_name: String) -> void:
-  if hands_in_zone.get(hand_name, false):
+  if _hands_in_zone.get(hand_name, false):
     emit_signal("hand_pose_started", hand_name)
   else:
     print("Ignoring hand pose start from " + hand_name + " hand (outside interaction zone)")
@@ -272,7 +271,7 @@ func _setup_debug_markers() -> void:
 func _update_debug_markers() -> void:
   # Update marker positions to match hand positions
   for hand_name in ["left", "right"]:
-    if _debug_hand_markers.has(hand_name) and hand_interaction_manager:
+    if _debug_hand_markers.has(hand_name) && hand_interaction_manager:
       var hand_position = hand_interaction_manager.get_hand_position(hand_name)
       if hand_position != Vector3.ZERO:
         _debug_hand_markers[hand_name].global_position = hand_position

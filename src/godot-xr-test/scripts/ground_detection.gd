@@ -1,6 +1,6 @@
 class_name GroundDetection extends RayCast3D
 
-# How far to cast the ray for ground detection
+## How far to cast the ray for ground detection
 @export var detection_distance: float = 10.0
 
 var ground_detected: bool = false
@@ -13,7 +13,7 @@ func _ready() -> void:
   enabled = true
   collision_mask = 1
 
-func _physics_process(_delta) -> void:
+func _physics_process(_delta: float) -> void:
   # Update ground detection
   if is_colliding():
     ground_detected = true
@@ -31,4 +31,4 @@ func is_valid_placement_position(pos: Vector3) -> bool:
   await get_tree().physics_frame
     
   # Check if we hit something
-  return ground_detected and ground_normal.dot(Vector3.UP) > 0.7  # Ensures surface is relatively flat
+  return ground_detected && ground_normal.dot(Vector3.UP) > 0.7  # Ensures surface is relatively flat

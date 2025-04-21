@@ -2,29 +2,38 @@ class_name ObjectGatherer extends Node
 
 signal gathering_complete
 
-# Configuration
-@export var radius: float = 1.0  # Distance from player
-@export var height_offset: float = -0.5  # Height relative to player (eye level)
-@export var arc_degrees: float = 180.0  # How much of a circle to use (180 = semicircle in front)
-@export var spacing_degrees: float = 45.0  # Spacing between objects
-@export var max_objects: int = 5  # Maximum objects to gather at once
+## Distance from player
+@export var radius: float = 1.0
 
-# References
-@export var xr_origin: XROrigin3D
+## Height relative to player (eye level)
+@export var height_offset: float = -0.5
 
-# Animation
+## How much of a circle to use (180 = semicircle in front)
+@export var arc_degrees: float = 180.0
+
+## Spacing between objects
+@export var spacing_degrees: float = 45.0
+
+## Maximum objects to gather at once
+@export var max_objects: int = 5
+
+## Animate object movement or directly set position (teleport)
 @export var animate_movement: bool = true
+
+## How long the animation takes
 @export var animation_duration: float = 0.5
 
+var _xr_origin: XROrigin3D
+
 func gather_objects() -> void:
-  if !xr_origin:
-    xr_origin = XRRig.instance
-    if !xr_origin:
+  if !_xr_origin:
+    _xr_origin = XRRig.instance
+    if !_xr_origin:
       print("ERROR: Cannot find XR Origin node")
       return
   
   # Get player position and forward direction
-  var camera = xr_origin.get_node("XRCamera3D")
+  var camera = _xr_origin.get_node("XRCamera3D")
   var player_position = camera.global_position
   var forward_direction = -camera.global_transform.basis.z
   forward_direction.y = 0  # Zero out the Y component to keep it horizontal
@@ -52,7 +61,6 @@ func gather_objects() -> void:
   
   # Calculate positions in an arc around the player
   var object_count = interactable_objects.size()
-  var right_vector = forward_direction.cross(Vector3.UP)
   
   # Determine how to distribute objects
   var angle_increment = min(spacing_degrees, arc_degrees / max(1, object_count - 1))
@@ -85,6 +93,5 @@ func gather_objects() -> void:
   emit_signal("gathering_complete")
 
 func animate_object_movement(obj: InteractableObject, target_position: Vector3) -> void:
-  # Create a tween to animate the movement
   var tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
   tween.tween_property(obj, "global_position", target_position, animation_duration)

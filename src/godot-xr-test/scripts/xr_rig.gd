@@ -1,5 +1,6 @@
 class_name XRRig extends XROrigin3D
 
+## Attachment points to attach nodes to
 enum AttachmentPoint {LEFT_HAND, RIGHT_HAND}
 
 static var instance: XRRig

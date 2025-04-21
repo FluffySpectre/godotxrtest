@@ -1,5 +1,6 @@
 class_name HandInteractionManager extends Node3D
 
+# Signals
 signal pinch_started(hand_name)
 signal pinch_ended(hand_name)
 signal grab_started(hand_name)
@@ -26,10 +27,8 @@ const GRAB_OPEN_FOR_HAND = 0.2
 const GRAB_CLOSE_FOR_HAND = 0.4
 
 # Action paths for hand tracking
-const LEFT_PINCH_PATH = "pinch"
-const RIGHT_PINCH_PATH = "pinch"
-const LEFT_GRAB_PATH = "grip" 
-const RIGHT_GRAB_PATH = "grip"
+const PINCH_PATH = "pinch"
+const GRAB_PATH = "grip"
 
 func _process(_delta) -> void:
   _process_hand_gestures()
@@ -37,10 +36,10 @@ func _process(_delta) -> void:
 
 func _process_hand_gestures() -> void:
   # Get pinch and grab values using the OpenXR action map
-  var left_pinch_value = _get_action_value(left_controller, LEFT_PINCH_PATH)
-  var right_pinch_value = _get_action_value(right_controller, RIGHT_PINCH_PATH)  
-  var left_grab_value = _get_action_value(left_controller, LEFT_GRAB_PATH)
-  var right_grab_value = _get_action_value(right_controller, RIGHT_GRAB_PATH)
+  var left_pinch_value = _get_action_value(left_controller, PINCH_PATH)
+  var right_pinch_value = _get_action_value(right_controller, PINCH_PATH)  
+  var left_grab_value = _get_action_value(left_controller, GRAB_PATH)
+  var right_grab_value = _get_action_value(right_controller, GRAB_PATH)
   
   # Process pinch gestures
   _process_pinch_gesture("left", left_pinch_value)
@@ -56,19 +55,19 @@ func _check_hand_poses() -> void:
 
 func _check_hand_pose(hand_name: String) -> void:
   var controller = left_controller if hand_name == "left" else right_controller
-  var currently_active = hand_name == "left" and left_hand_pose_active or hand_name == "right" and right_hand_pose_active
+  var currently_active = hand_name == "left" && left_hand_pose_active || hand_name == "right" && right_hand_pose_active
   
-  if not controller:
+  if !controller:
     return
   
   # Get the grab value to ensure the hand is open
-  var grab_value = _get_action_value(controller, LEFT_GRAB_PATH if hand_name == "left" else RIGHT_GRAB_PATH)
-  var hand_is_open = (!currently_active and grab_value <= GRAB_OPEN_FOR_HAND) || (currently_active and grab_value <= GRAB_CLOSE_FOR_HAND)
+  var grab_value = _get_action_value(controller, GRAB_PATH)
+  var hand_is_open = (!currently_active && grab_value <= GRAB_OPEN_FOR_HAND) || (currently_active && grab_value <= GRAB_CLOSE_FOR_HAND)
 
   var back_of_hand_facing_camera = hand_is_open
 
   # Detect hand pose started
-  if back_of_hand_facing_camera and not currently_active:
+  if back_of_hand_facing_camera && !currently_active:
     if hand_name == "left":
       left_hand_pose_active = true
     else:
@@ -77,7 +76,7 @@ func _check_hand_pose(hand_name: String) -> void:
     print("Hand back pose started: ", hand_name)
   
   # Detect hand pose ended
-  elif not back_of_hand_facing_camera and currently_active:
+  elif !back_of_hand_facing_camera && currently_active:
     if hand_name == "left":
       left_hand_pose_active = false
     else:
@@ -87,16 +86,15 @@ func _check_hand_pose(hand_name: String) -> void:
 
 func _get_action_value(controller, action_path) -> float:
   if controller:
-    # Try to get float input
     if controller.has_method("get_float"):
       return controller.get_float(action_path)
   return 0.0
 
 func _process_pinch_gesture(hand_name, pinch_value) -> void:
-  var currently_pinching = (hand_name == "left" and left_pinching) or (hand_name == "right" and right_pinching)
+  var currently_pinching = (hand_name == "left" && left_pinching) || (hand_name == "right" && right_pinching)
   
   # Detect pinch start
-  if pinch_value >= PINCH_THRESHOLD and not currently_pinching:
+  if pinch_value >= PINCH_THRESHOLD && !currently_pinching:
     if hand_name == "left":
       left_pinching = true
     else:
@@ -104,7 +102,7 @@ func _process_pinch_gesture(hand_name, pinch_value) -> void:
     emit_signal("pinch_started", hand_name)
   
   # Detect pinch end
-  elif pinch_value < PINCH_THRESHOLD and currently_pinching:
+  elif pinch_value < PINCH_THRESHOLD && currently_pinching:
     if hand_name == "left":
       left_pinching = false
     else:
@@ -112,10 +110,10 @@ func _process_pinch_gesture(hand_name, pinch_value) -> void:
     emit_signal("pinch_ended", hand_name)
 
 func _process_grab_gesture(hand_name, grab_value) -> void:
-  var currently_grabbing = (hand_name == "left" and left_grabbing) or (hand_name == "right" and right_grabbing)
+  var currently_grabbing = (hand_name == "left" && left_grabbing) || (hand_name == "right" && right_grabbing)
   
   # Detect grab start
-  if grab_value >= GRAB_THRESHOLD and not currently_grabbing:
+  if grab_value >= GRAB_THRESHOLD && !currently_grabbing:
     if hand_name == "left":
       left_grabbing = true
     else:
@@ -123,7 +121,7 @@ func _process_grab_gesture(hand_name, grab_value) -> void:
     emit_signal("grab_started", hand_name)
   
   # Detect grab end
-  elif grab_value < GRAB_THRESHOLD and currently_grabbing:
+  elif grab_value < GRAB_THRESHOLD && currently_grabbing:
     if hand_name == "left":
       left_grabbing = false
     else:

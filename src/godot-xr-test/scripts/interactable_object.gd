@@ -1,12 +1,12 @@
 class_name InteractableObject extends Node3D
 
 # Signals
-signal pinch_move_started(hand_name)
-signal pinch_move_ended(hand_name)
+signal pinch_move_started(hand_name: String)
+signal pinch_move_ended(hand_name: String)
 signal scaling_started
 signal scaling_ended
-signal rotation_started(hand_name)
-signal rotation_ended(hand_name)
+signal rotation_started(hand_name: String)
+signal rotation_ended(hand_name: String)
 signal selected
 signal selection_lost
 
@@ -26,7 +26,6 @@ signal selection_lost
 @export var flick_speed_threshold: float = 0.5  # Minimum hand speed to trigger flick (m/s)
 @export var flick_force_multiplier: float = 1.0  # How much force to apply
 @export var flick_deceleration: float = 5.0  # How quickly flick slows down (higher = faster stop)
-@export var flick_max_distance: float = 2.0  # Maximum distance object can travel from flick
 
 # Sound Properties
 @export_group("Sound Settings")
@@ -93,15 +92,6 @@ func set_selected(selected_: bool) -> void:
     emit_signal("selected")
   else:
     emit_signal("selection_lost")
-  
-  # Update visual feedback for selection
-  #if is_selected:
-    ## Show selection highlight
-    #interaction_area.set_highlight(true)
-  #else:
-    ## Hide highlight unless there's an active interaction
-    #if !is_moving:
-      #interaction_area.set_highlight(false)
 
 func _ready() -> void:
   # Connect signals from interaction zone manager
@@ -127,7 +117,7 @@ func _ready() -> void:
   print("Rotation threshold: ", rotation_threshold)
   print("Flick enabled: ", enable_flick)
 
-func _process(delta) -> void:
+func _process(delta: float) -> void:
   # Update hand positions
   _update_hand_positions()
   
@@ -138,10 +128,10 @@ func _process(delta) -> void:
   _update_area_transform()
   
   # Check for two-hand scaling (requires selection)
-  if hands_pinching["left"] and hands_pinching["right"] and can_scale and !is_scaling:
+  if hands_pinching["left"] && hands_pinching["right"] && can_scale && !is_scaling:
     # Only allow scaling if object is selected
     if is_selected:
-      if (!is_moving and !is_rotating) or (is_rotating and !is_rotation_active) or (is_moving and !movement_started):
+      if (!is_moving && !is_rotating) || (is_rotating && !is_rotation_active) || (is_moving && !movement_started):
         # We're either not in a mode or in a pre-threshold state, so we can switch to scaling
         print("Both hands pinching - starting scaling")
         
@@ -156,24 +146,24 @@ func _process(delta) -> void:
       pass
   
   # Update rotation (check if we've crossed the threshold)
-  if is_rotating and !is_rotation_active and active_hand != "":
+  if is_rotating && !is_rotation_active && active_hand != "":
     _check_rotation_threshold()
   
   # Handle the active interaction modes
-  if is_scaling and can_scale:
+  if is_scaling && can_scale:
     _update_scale()
-  elif is_moving and can_move and movement_started:
+  elif is_moving && can_move && movement_started:
     _update_position()
-  elif is_rotating and can_rotate and is_rotation_active:
+  elif is_rotating && can_rotate && is_rotation_active:
     _update_rotation(delta)
   
   # Apply ground snapping when not being manipulated
-  if snap_to_ground and !is_moving and !flick_active:
+  if snap_to_ground && !is_moving && !flick_active:
     _snap_to_ground()
 
-func _physics_process(delta) -> void:
+func _physics_process(delta: float) -> void:
   # Handle flick physics if active
-  if flick_active and enable_flick:
+  if flick_active && enable_flick:
     _update_flick_movement(delta)
 
 func _update_hand_positions() -> void:
@@ -198,7 +188,7 @@ func _update_hands_in_area() -> void:
           interaction_area.set_highlight(true)
         else:
           print(hand_name, " hand exited interaction area")
-          if active_hand == "" or active_hand != hand_name:  # Only turn off highlight if not currently interacting
+          if active_hand == "" || active_hand != hand_name:  # Only turn off highlight if not currently interacting
               interaction_area.set_highlight(false)
 
 func _update_area_transform() -> void:
@@ -208,7 +198,7 @@ func _update_area_transform() -> void:
   interaction_area.rotate_area(model.rotation)
 
 func _check_rotation_threshold() -> void:
-  if !is_rotating or active_hand == "" or !last_hand_positions.has(active_hand):
+  if !is_rotating || active_hand == "" || !last_hand_positions.has(active_hand):
     return
       
   var current_hand_position = last_hand_positions[active_hand]
@@ -229,18 +219,18 @@ func _check_rotation_threshold() -> void:
     pass
     #print("Waiting for rotation threshold: current=", horizontal_movement, ", threshold=", rotation_threshold)
 
-func _on_pinch_started(hand_name) -> void:
+func _on_pinch_started(hand_name: String) -> void:
   print("Pinch started: ", hand_name)
   hands_pinching[hand_name] = true
   
   # If we're not in any interaction mode
-  if !is_scaling and !is_moving and !is_rotating:
+  if !is_scaling && !is_moving && !is_rotating:
     # Single hand - check if the pinch started inside or outside the interaction area
-    if hands_in_area[hand_name] and can_move:
+    if hands_in_area[hand_name] && can_move:
       # Pinch inside area - start movement mode (allowed for all objects)
       print("Pinch inside interaction area, preparing movement with hand: ", hand_name)
       _start_movement(hand_name)
-    elif !hands_in_area[hand_name] and can_rotate:
+    elif !hands_in_area[hand_name] && can_rotate:
       # Pinch outside area - prepare rotation mode (requires selection)
       if is_selected:
         print("Pinch outside interaction area, preparing rotation with hand: ", hand_name)
@@ -250,12 +240,12 @@ func _on_pinch_started(hand_name) -> void:
     else:
       print("Hand is pinching but not eligible for interaction")
 
-func _on_pinch_ended(hand_name) -> void:
+func _on_pinch_ended(hand_name: String) -> void:
   print("Pinch ended: ", hand_name)
   hands_pinching[hand_name] = false
   
   # If either hand stops pinching during scaling, end scaling mode
-  if is_scaling and (!hands_pinching["left"] or !hands_pinching["right"]):
+  if is_scaling && (!hands_pinching["left"] || !hands_pinching["right"]):
     print("Ending scaling mode")
     _end_scaling()
   
@@ -268,7 +258,7 @@ func _on_pinch_ended(hand_name) -> void:
       print("Ending rotation mode")
       _end_rotation()
 
-func _start_movement(hand_name) -> void:
+func _start_movement(hand_name: String) -> void:
   _reset_all_modes()
   
   is_moving = true
@@ -301,7 +291,7 @@ func _end_movement() -> void:
   active_hand = ""
   
   # Check if we should apply flick
-  if enable_flick and hand_velocity.length() > flick_speed_threshold:
+  if enable_flick && hand_velocity.length() > flick_speed_threshold:
     flick_velocity = hand_velocity * flick_force_multiplier
     flick_active = true
     print("Flick activated with velocity: ", flick_velocity)
@@ -317,7 +307,7 @@ func _end_movement() -> void:
   print("Movement ended")
   emit_signal("pinch_move_ended", previous_hand)
 
-func _prepare_rotation(hand_name) -> void:
+func _prepare_rotation(hand_name: String) -> void:
   _reset_all_modes()
   
   is_rotating = true
@@ -353,7 +343,7 @@ func _end_rotation() -> void:
 
 func _start_scaling() -> void:
   # Don't start scaling if we don't have positions for both hands
-  if !last_hand_positions.has("left") or !last_hand_positions.has("right"):
+  if !last_hand_positions.has("left") || !last_hand_positions.has("right"):
     print("Cannot start scaling: missing hand positions")
     return
   
@@ -402,7 +392,7 @@ func _reset_all_modes() -> void:
   scale_change_accumulated = 0.0
 
 func _update_position() -> void:
-  if !is_moving or !active_hand or !last_hand_positions.has(active_hand):
+  if !is_moving || !active_hand || !last_hand_positions.has(active_hand):
     return
       
   var current_hand_position = last_hand_positions[active_hand]
@@ -461,14 +451,9 @@ func _update_flick_movement(delta: float) -> void:
   # Apply ground snapping if enabled
   if snap_to_ground:
     _snap_to_ground()
-    
-  # Check if we've traveled the maximum allowed distance
-  if flick_velocity.length_squared() < 0.01 or (initial_object_position.distance_to(global_transform.origin) > flick_max_distance):
-    flick_velocity = Vector3.ZERO
-    flick_active = false
 
-func _update_rotation(delta) -> void:
-  if !is_rotating or !is_rotation_active or !active_hand or !last_hand_positions.has(active_hand):
+func _update_rotation(delta: float) -> void:
+  if !is_rotating || !is_rotation_active || !active_hand || !last_hand_positions.has(active_hand):
     return
   
   var current_hand_position = last_hand_positions[active_hand]
@@ -505,7 +490,7 @@ func _update_rotation(delta) -> void:
     last_rotation = new_rotation
      
 func _update_scale() -> void:
-  if !is_scaling or !model:
+  if !is_scaling || !model:
     return
       
   # Get current hand positions
@@ -537,11 +522,9 @@ func _update_scale() -> void:
   last_scale = new_scale
 
 func _snap_to_ground() -> void:
-  # Cast a ray downward from the object
-  if ground_detection and ground_detection.is_colliding():
+  if ground_detection && ground_detection.is_colliding():
     var collision_point = ground_detection.get_collision_point()
     var current_pos = global_transform.origin
-    # Only adjust Y coordinate, keeping X and Z the same
     global_transform.origin = Vector3(
       current_pos.x, 
       collision_point.y + (model.scale.y * 0.5),
@@ -554,11 +537,11 @@ func _play_move_sound() -> void:
     sound_player.play()
 
 func _play_rotation_sound() -> void:
-  if sound_player and rotation_sound:
+  if sound_player && rotation_sound:
     sound_player.stream = rotation_sound
     sound_player.play()
 
 func _play_scale_sound() -> void:
-  if sound_player and scale_sound:
+  if sound_player && scale_sound:
     sound_player.stream = scale_sound
     sound_player.play()

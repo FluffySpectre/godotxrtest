@@ -20,24 +20,23 @@ func rotate_area(rotate_value: Vector3) -> void:
   _parent.rotation = rotate_value
 
 func is_position_in_area(pos: Vector3) -> bool:    
-  if not _interaction_area_collision or not _interaction_area_collision.shape:
+  if !_interaction_area_collision || !_interaction_area_collision.shape:
     return false
-      
-  # Get the shape
+  
   var box_shape = _interaction_area_collision.shape as BoxShape3D
-  if not box_shape:
+  if !box_shape:
     return false
   
   # Convert the position to local space
-  var local_position = global_transform.affine_inverse() * pos
+  var local_position = to_local(pos)
   
   # Get the box size (half-extents)
   var box_size = box_shape.size / 2
   
   # Check if the position is inside the box
   return (
-    abs(local_position.x) <= box_size.x and
-    abs(local_position.y) <= box_size.y and
+    abs(local_position.x) <= box_size.x &&
+    abs(local_position.y) <= box_size.y &&
     abs(local_position.z) <= box_size.z
   )
 
