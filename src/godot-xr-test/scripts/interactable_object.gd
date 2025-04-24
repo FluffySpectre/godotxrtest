@@ -27,6 +27,12 @@ signal selection_lost
 @export var flick_force_multiplier: float = 1.0  # How much force to apply
 @export var flick_deceleration: float = 5.0  # How quickly flick slows down (higher = faster stop)
 
+# Rotation Flick Properties
+@export var enable_rotation_flick: bool = true
+@export var rotation_flick_speed_threshold: float = 0.3  # Minimum angular speed to trigger flick (rad/s)
+@export var rotation_flick_force_multiplier: float = 1.0  # How much force to apply to rotation
+@export var rotation_flick_deceleration: float = 3.0  # How quickly rotation flick slows down
+
 # Sound Properties
 @export_group("Sound Settings")
 @export var move_sound: AudioStream  # Sound to play during movement
@@ -71,6 +77,13 @@ var previous_hand_position: Vector3 = Vector3.ZERO  # Previous frame's hand posi
 var velocity_history: Array = []             # Store recent velocity samples
 var velocity_sample_count: int = 5           # Number of samples to average for smoother velocity
 
+# Rotation flick state variables
+var rotation_flick_active: bool = false      # Whether object is currently in rotation flick
+var rotation_flick_velocity: float = 0.0     # Current rotation flick velocity (radians/sec)
+var rotation_velocity: float = 0.0           # Tracked rotation velocity
+var previous_rotation: float = 0.0           # Previous frame's rotation
+var rotation_velocity_history: Array = []    # Store recent rotation velocity samples
+
 # Sound tracking variables
 var sound_player: AudioStreamPlayer3D
 var move_distance_accumulated: float = 0.0
@@ -107,6 +120,7 @@ func _ready() -> void:
   last_position = global_transform.origin
   if model:
     last_rotation = model.rotation.y
+    previous_rotation = last_rotation
   
   # Setup sound
   if has_node("SoundPlayer"):
@@ -116,6 +130,7 @@ func _ready() -> void:
   print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate)
   print("Rotation threshold: ", rotation_threshold)
   print("Flick enabled: ", enable_flick)
+  print("Rotation flick enabled: ", enable_rotation_flick)
 
 func _process(delta: float) -> void:
   # Update hand positions
@@ -165,6 +180,10 @@ func _physics_process(delta: float) -> void:
   # Handle flick physics if active
   if flick_active && enable_flick:
     _update_flick_movement(delta)
+    
+  # Handle rotation flick physics if active
+  if rotation_flick_active && enable_rotation_flick:
+    _update_rotation_flick(delta)
 
 func _update_hand_positions() -> void:
   # Keep track of hand positions for calculations
@@ -213,6 +232,10 @@ func _check_rotation_threshold() -> void:
     initial_pinch_position = current_hand_position
     initial_hand_x = initial_pinch_position.x
     last_hand_x = initial_hand_x
+    
+    # Reset rotation velocity tracking
+    rotation_velocity = 0.0
+    rotation_velocity_history.clear()
     
     emit_signal("rotation_started", active_hand)
   else:
@@ -320,9 +343,14 @@ func _prepare_rotation(hand_name: String) -> void:
   last_hand_x = initial_hand_x
   initial_object_rotation = model.rotation.y
   
+  # Reset rotation velocity tracking
+  rotation_velocity = 0.0
+  rotation_velocity_history.clear()
+  
   # Reset sound tracking
   rotation_accumulated = 0.0
   last_rotation = model.rotation.y
+  previous_rotation = last_rotation
   
   print("Rotation prepared with hand: ", hand_name)
   print("Initial hand X: ", initial_hand_x)
@@ -337,6 +365,19 @@ func _end_rotation() -> void:
   is_rotation_active = false
   var previous_hand = active_hand
   active_hand = ""
+  
+  # Check if we should apply rotation flick
+  if enable_rotation_flick && abs(rotation_velocity) > rotation_flick_speed_threshold:
+    rotation_flick_velocity = rotation_velocity * rotation_flick_force_multiplier
+    rotation_flick_active = true
+    print("Rotation flick activated with velocity: ", rotation_flick_velocity)
+  else:
+    rotation_flick_velocity = 0.0
+    rotation_flick_active = false
+  
+  # Reset rotation velocity tracking
+  rotation_velocity = 0.0
+  rotation_velocity_history.clear()
   
   print("Rotation ended")
   emit_signal("rotation_ended", previous_hand)
@@ -385,6 +426,8 @@ func _reset_all_modes() -> void:
   active_hand = ""
   flick_active = false
   flick_velocity = Vector3.ZERO
+  rotation_flick_active = false
+  rotation_flick_velocity = 0.0
   
   # Reset sound tracking variables
   move_distance_accumulated = 0.0
@@ -476,6 +519,23 @@ func _update_rotation(delta: float) -> void:
     var new_rotation = initial_object_rotation + rotation_amount
     model.rotation.y = new_rotation
     
+    # Calculate rotation velocity for flick
+    var frame_rotation_velocity = (new_rotation - previous_rotation) / delta
+    
+    # Add to velocity history for smoothing
+    rotation_velocity_history.push_back(frame_rotation_velocity)
+    if rotation_velocity_history.size() > velocity_sample_count:
+      rotation_velocity_history.pop_front()
+      
+    # Calculate average rotation velocity
+    rotation_velocity = 0.0
+    for vel in rotation_velocity_history:
+      rotation_velocity += vel
+    rotation_velocity /= rotation_velocity_history.size()
+    
+    # Store for next frame
+    previous_rotation = new_rotation
+    
     # Check for sound trigger
     if last_rotation != 0.0:
       var rotation_change = abs(new_rotation - last_rotation)
@@ -488,6 +548,36 @@ func _update_rotation(delta: float) -> void:
         rotation_accumulated = fmod(rotation_accumulated, rotation_sound_interval)
     
     last_rotation = new_rotation
+
+func _update_rotation_flick(delta: float) -> void:
+  if !model || !rotation_flick_active:
+    return
+  
+  # Apply current rotation flick velocity
+  model.rotation.y += rotation_flick_velocity * delta
+  
+  # Apply deceleration
+  var deceleration = sign(rotation_flick_velocity) * rotation_flick_deceleration * delta
+  
+  # Ensure we don't overshoot zero
+  if abs(deceleration) > abs(rotation_flick_velocity):
+    rotation_flick_velocity = 0.0
+    rotation_flick_active = false
+  else:
+    rotation_flick_velocity -= deceleration
+  
+  # Check for sound trigger during flick rotation
+  if last_rotation != 0.0:
+    var rotation_change = abs(model.rotation.y - last_rotation)
+    rotation_accumulated += rotation_change
+    
+    # Play sound at regular intervals
+    if rotation_accumulated >= rotation_sound_interval:
+      _play_rotation_sound()
+      # Keep remainder for smoother timing
+      rotation_accumulated = fmod(rotation_accumulated, rotation_sound_interval)
+  
+  last_rotation = model.rotation.y
      
 func _update_scale() -> void:
   if !is_scaling || !model:

@@ -36,7 +36,7 @@ func gather_objects() -> void:
   var camera = _xr_origin.get_node("XRCamera3D")
   var player_position = camera.global_position
   var forward_direction = -camera.global_transform.basis.z
-  forward_direction.y = 0  # Zero out the Y component to keep it horizontal
+  forward_direction.y = 0
   forward_direction = forward_direction.normalized()
   
   # Get all top-level InteractableObjects in the scene
