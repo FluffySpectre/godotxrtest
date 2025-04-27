@@ -23,19 +23,18 @@ signal gathering_complete
 ## How long the animation takes
 @export var animation_duration: float = 0.5
 
-var _xr_origin: XROrigin3D
+var _camera: Node3D
 
 func gather_objects() -> void:
-  if !_xr_origin:
-    _xr_origin = XRRig.instance
-    if !_xr_origin:
-      print("ERROR: Cannot find XR Origin node")
+  if !_camera:
+    _camera = get_viewport().get_camera_3d()
+    if !_camera:
+      print("ERROR: Cannot find camera")
       return
   
   # Get player position and forward direction
-  var camera = _xr_origin.get_node("XRCamera3D")
-  var player_position = camera.global_position
-  var forward_direction = -camera.global_transform.basis.z
+  var player_position = _camera.global_position
+  var forward_direction = -_camera.global_transform.basis.z
   forward_direction.y = 0
   forward_direction = forward_direction.normalized()
   
