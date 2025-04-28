@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://be3xnhmmb0v3j"]
+[gd_scene load_steps=14 format=3 uid="uid://be3xnhmmb0v3j"]
 
 [ext_resource type="Script" uid="uid://c5ja1fnfgrodr" path="res://scripts/xr_rig.gd" id="1_4hrip"]
 [ext_resource type="PackedScene" uid="uid://djvehr3kjfhbn" path="res://assets/models/valve_hand/vr_glove_left_model_slim_v9.fbx" id="2_hg5dl"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://bdkstolm7rlft" path="res://assets/models/valve_hand/vr_glove_right_model_slim_v9.fbx" id="5_2ofhi"]
 [ext_resource type="Script" uid="uid://d3u7st03gfs8h" path="res://scripts/hand_interaction_manager.gd" id="6_xllm5"]
 [ext_resource type="Script" uid="uid://0if0m2ftvto7" path="res://scripts/gaze_selection.gd" id="7_tydbt"]
+[ext_resource type="PackedScene" uid="uid://c4w81gucyn6sy" path="res://scenes/spatial_entity.tscn" id="9_4hrip"]
 [ext_resource type="Script" uid="uid://bftg045hnrand" path="res://scripts/interaction_zone_manager.gd" id="9_dd1ma"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_hg5dl"]
@@ -150,6 +151,9 @@ xr_camera = NodePath("../XRCamera3D")
 hand_interaction_manager = NodePath("../HandInteractionManager")
 zone_material = SubResource("StandardMaterial3D_dd1ma")
 metadata/_custom_type_script = "uid://bftg045hnrand"
+
+[node name="OpenXRFbSceneManager" type="OpenXRFbSceneManager" parent="."]
+default_scene = ExtResource("9_4hrip")
 
 [editable path="LeftXRNode3D/vr_glove_left_model_slim_v9"]
 [editable path="RightXRNode3D/vr_glove_right_model_slim_v9"]
