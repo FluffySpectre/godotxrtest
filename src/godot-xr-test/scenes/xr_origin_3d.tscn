@@ -153,7 +153,7 @@ zone_material = SubResource("StandardMaterial3D_dd1ma")
 metadata/_custom_type_script = "uid://bftg045hnrand"
 
 [node name="OpenXRFbSceneManager" type="OpenXRFbSceneManager" parent="."]
-default_scene = ExtResource("9_4hrip")
+scenes/global_mesh = ExtResource("9_4hrip")
 
 [editable path="LeftXRNode3D/vr_glove_left_model_slim_v9"]
 [editable path="RightXRNode3D/vr_glove_right_model_slim_v9"]
