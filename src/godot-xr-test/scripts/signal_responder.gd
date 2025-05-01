@@ -1,28 +1,30 @@
+@tool
+@icon("res://assets/icons/signal_responder.svg")
 class_name SignalResponder extends Node
 
+## DEPRECATED
 enum ResponseActionType {
-    NONE,                  ## No action
-    SHOW_HIDE,             ## Show or hide a node
-    ENABLE_DISABLE,        ## Enable of disable the processing of a node
-    CHANGE_MATERIAL,       ## Change material on a mesh
-    PLAY_SOUND,            ## Play an audio file
-    PLAY_ANIMATION,        ## Play an animation
-    TOGGLE_VISIBILITY,     ## Toggle visibility
-    EMIT_PARTICLES,        ## Emit particles
-    LOAD_SCENE,            ## Load a scene
-    SPAWN_OBJECT,          ## Spawn an object
-    TELEPORT,              ## Teleport an object
-    CUSTOM_FUNCTION,       ## Call a custom function
-    TOGGLE_VIDEO_PLAYBACK, ## Toggle video player playback
-    TOGGLE_MATERIALS       ## Toggle between two materials
+  NONE,                  ## No action
+  SHOW_HIDE,             ## Show or hide a node
+  ENABLE_DISABLE,        ## Enable of disable the processing of a node
+  CHANGE_MATERIAL,       ## Change material on a mesh
+  PLAY_SOUND,            ## Play an audio file
+  PLAY_ANIMATION,        ## Play an animation
+  TOGGLE_VISIBILITY,     ## Toggle visibility
+  EMIT_PARTICLES,        ## Emit particles
+  LOAD_SCENE,            ## Load a scene
+  SPAWN_OBJECT,          ## Spawn an object
+  TELEPORT,              ## Teleport an object
+  CUSTOM_FUNCTION,       ## Call a custom function
+  TOGGLE_VIDEO_PLAYBACK, ## Toggle video player playback
+  TOGGLE_MATERIALS       ## Toggle between two materials
 }
 
-@export_category("Event Response Configuration")
 @export var signal_name: String
-@export var action_type: ResponseActionType = ResponseActionType.NONE
 
-# Target configuration
-@export_category("Action Targets")
+# Deprecated configuration
+@export_group("DEPRECATED CONFIGURATION")
+@export var action_type: ResponseActionType = ResponseActionType.NONE
 @export var target_node: Node
 @export var target_material: Material
 @export var target_material_2: Material
@@ -33,118 +35,63 @@ enum ResponseActionType {
 @export var target_position: Node3D
 @export var target_function: String
 @export var custom_args: Array = []
-
-# Action parameters
-@export_category("Action Parameters")
-## For SHOW_HIDE and ENABLE_DISABLE
 @export var show: bool = true
-
-## Delay before action
 @export var delay: float = 0.0
-
-## For CHANGE_MATERIAL - apply to all child meshes
 @export var apply_to_children: bool = true
 
 @onready var _parent: Node = get_parent()
 
-# State tracking
-var _using_material_1: bool = false
-
 func _ready() -> void:
-  if signal_name.is_empty():
+  if Engine.is_editor_hint():
     return
   
-  if _parent.has_signal(signal_name):
+  if not signal_name.is_empty() and _parent.has_signal(signal_name):
     _parent.connect(signal_name, _on_signal_received)
+  else:
+    print("SignalResponder: Failed to connect to signal '%s' on node '%s'" % [signal_name, _parent.name])
 
 func _on_signal_received(_arg1=null, _arg2=null, _arg3=null, _arg4=null) -> void:
-  if delay > 0:
-    var timer = get_tree().create_timer(delay)
-    timer.timeout.connect(_execute_action)
-  else:
-    _execute_action()
-  
-func _execute_action() -> void:
-  match action_type:
-    ResponseActionType.SHOW_HIDE:
-      target_node.visible = show
-      
-    ResponseActionType.ENABLE_DISABLE:
-      target_node.visible = show
-      target_node.process_mode = PROCESS_MODE_INHERIT if show else PROCESS_MODE_DISABLED
-    
-    ResponseActionType.TOGGLE_VISIBILITY:
-      target_node.visible = !target_node.visible
-                
-    ResponseActionType.CHANGE_MATERIAL:
-      if target_node:
-        if target_node is MeshInstance3D:
-          target_node.material_override = target_material
-        
-        if apply_to_children:
-          _apply_material_to_children(target_node, target_material)
-  
-    ResponseActionType.TOGGLE_MATERIALS:
-      if target_node:
-        # Determine which material to apply
-        var material_to_apply = target_material_2 if _using_material_1 else target_material
-        
-        # Apply the material
-        if target_node is MeshInstance3D:
-          target_node.material_override = material_to_apply
-        
-        if apply_to_children:
-          _apply_material_to_children(target_node, material_to_apply)
-        
-        _using_material_1 = !_using_material_1
-    
-    ResponseActionType.PLAY_SOUND:
-      if target_node is AudioStreamPlayer3D && target_audio:
-        target_node.stream = target_audio
-        target_node.play()
-                
-    ResponseActionType.PLAY_ANIMATION:
-      if target_node is AnimationPlayer && target_animation:
-        target_node.play(target_animation)
-                
-    ResponseActionType.EMIT_PARTICLES:
-      if target_particles:
-        target_particles.emitting = true
-    
-    ResponseActionType.LOAD_SCENE:
-      if target_scene:
-        get_tree().change_scene_to_packed(target_scene)
-                
-    ResponseActionType.SPAWN_OBJECT:
-      if target_scene and target_position:
-        var instance = target_scene.instantiate()
-        target_position.add_child(instance)
-        instance.global_position = target_position.global_position
-                
-    ResponseActionType.TELEPORT:
-      if target_node && target_position:
-        target_node.global_position = target_position.global_position
-    
-    ResponseActionType.CUSTOM_FUNCTION:
-      if target_node && target_function && target_node.has_method(target_function):
-        if custom_args.size() > 0:
-          target_node.callv(target_function, custom_args)
-        else:
-          target_node.call(target_function)
-          
-    ResponseActionType.TOGGLE_VIDEO_PLAYBACK:
-      if target_node && target_node is VideoStreamPlayer:
-        if target_node.is_playing():
-          target_node.pause()
-        else:
-          target_node.play()
+  for action in get_children():
+    if action is SignalAction:
+      if action.delay > 0:
+        var timer = get_tree().create_timer(action.delay)
+        timer.timeout.connect(action.execute)
+      else:
+        action.execute()  
 
-# Recursively apply material to all child meshes
-func _apply_material_to_children(node: Node, material: Material) -> void:
-  for child in node.get_children():
-    if child is MeshInstance3D:
-      child.material_override = material
+func _validate_property(_property: Dictionary) -> void:
+  if action_type == ResponseActionType.NONE:
+    return
+  
+  # Migrate the old configuration to the new one (if needed)
+  var needs_migration: bool = true
+  if get_child_count() > 0:
+    needs_migration = !get_children().any(func(c: Node): return c is SignalAction)
+  
+  if needs_migration:
+    # Create a new SignalAction node
+    var signal_action: SignalAction = SignalAction.new()
+    signal_action.name = "SignalAction"
     
-    # Continue recursion if the child has children
-    if child.get_child_count() > 0:
-      _apply_material_to_children(child, material)
+    # Move configuration over to node
+    var new_action_type: SignalAction.ActionType = action_type as SignalAction.ActionType
+    signal_action.action_type = new_action_type
+    signal_action.delay = delay
+    # Target configuration
+    signal_action.target_node = target_node
+    signal_action.target_material = target_material
+    signal_action.target_material_2 = target_material_2
+    signal_action.target_audio = target_audio
+    signal_action.target_animation = target_animation
+    signal_action.target_scene = target_scene
+    signal_action.target_particles = target_particles
+    signal_action.target_position = target_position
+    signal_action.target_function = target_function
+    signal_action.custom_args = custom_args
+    # Action parameters
+    signal_action.show = show
+    signal_action.apply_to_children = apply_to_children
+
+    # Add configured node as a child
+    add_child(signal_action)
+    signal_action.owner = get_tree().edited_scene_root
