@@ -881,12 +881,10 @@ func _snap_to_zone(zone: SnappingZone) -> void:
   var target_position = zone.get_snap_position()
   var target_rotation = zone.get_snap_rotation()
   
-  # Create animation tween
+  var initial_transform = global_transform
+  var target_transform = Transform3D(Basis.from_euler(target_rotation), target_position)
   snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-  snap_back_tween.tween_property(self, "global_position", target_position, snap_back_speed)
-  snap_back_tween.parallel().tween_property(self, "global_rotation", target_rotation, snap_back_speed)
-  
-  # Connect completion signal
+  snap_back_tween.tween_method(func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress), 0.0, 1.0, snap_back_speed)
   snap_back_tween.finished.connect(func(): _on_snap_to_zone_complete(zone))
   
   # Play snap sound
