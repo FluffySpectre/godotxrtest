@@ -11,6 +11,10 @@ signal selected
 signal selection_lost
 signal grabbed(hand_name: String)
 signal released(hand_name: String)
+signal snapped_to_zone(zone: SnappingZone)
+signal unsnapped_from_zone()
+signal entered_zone(zone: SnappingZone)
+signal exited_zone(zone: SnappingZone)
 
 # Properties
 @export var can_scale: bool = true
@@ -23,10 +27,23 @@ signal released(hand_name: String)
 @export var snap_to_ground: bool = false
 @export var rotation_threshold: float = 0.02  # Distance in meters before rotation starts
 
+# Object Properties
+@export_group("Object Settings")
+@export var tag: String = ""  # Tag for filtering in SnappingZones
+@export var object_type: String = ""  # Type for filtering
+
 # Grab Properties
 @export_group("Grab Settings")
 @export var grab_offset: Vector3 = Vector3(0, 0, 0)  # Offset from the hand attachment point
 @export var maintain_global_rotation: bool = false  # Whether to maintain world rotation when grabbed
+
+# Snapping Properties
+@export_group("Snapping Settings")
+@export var can_snap: bool = true  # Whether this object can snap to SnappingZones
+@export var snap_back_when_released: bool = false  # Whether to return to original position when released
+@export var snap_to_closest_zone: bool = true  # Whether to snap to closest zone when released
+@export var snap_back_speed: float = 0.5  # Speed of snap back/zone snap animation (seconds)
+@export var snap_zone_max_distance: float = 0.5  # Maximum distance to consider for auto-snapping to zones
 
 # Flick Properties
 @export_group("Flick Settings")
@@ -48,6 +65,9 @@ signal released(hand_name: String)
 @export var scale_sound: AudioStream  # Sound to play during scaling
 @export var grab_sound: AudioStream  # Sound for grabbing
 @export var release_sound: AudioStream  # Sound for releasing
+@export var snap_back_sound: AudioStream  # Sound for snapping back
+@export var snap_to_zone_sound: AudioStream  # Sound for snapping to a zone
+@export var unsnap_from_zone_sound: AudioStream  # Sound for unsnapping from a zone
 @export var move_sound_interval: float = 0.1  # Distance in meters between sound clicks
 @export var rotation_sound_interval: float = 0.15  # Radians between sound clicks
 @export var scale_sound_interval: float = 0.1  # Scale factor change between sound clicks
@@ -64,6 +84,8 @@ var is_moving: bool = false            # Tracking if we're in movement mode
 var is_scaling: bool = false           # Tracking if we're in scaling mode
 var is_rotating: bool = false          # Tracking if we're in rotation mode
 var is_grabbed: bool = false           # Tracking if the object is currently grabbed
+var is_snapping_back: bool = false     # Tracking if the object is snapping back
+var is_snapped_to_zone: bool = false   # Tracking if currently snapped to a zone
 var movement_started: bool = false     # Tracking if we've crossed the movement threshold
 var is_rotation_active: bool = false   # Tracking if we've crossed the rotation threshold
 var active_hand: String = ""           # Which hand is controlling movement/rotation
@@ -83,6 +105,12 @@ var original_parent: Node = null       # Store the original parent for when we'r
 
 # Grab state variables
 var pre_grab_transform: Transform3D    # Store the transform before grabbing
+var snap_back_target_transform: Transform3D  # Store the transform to snap back to
+var snap_back_tween: Tween             # Tween for snap back animation
+
+# Snapping zone state variables
+var current_zone: SnappingZone = null  # Currently snapped to zone
+var nearby_zones: Array[SnappingZone] = []  # Zones this object is inside
 
 # Flick state variables
 var flick_velocity: Vector3 = Vector3.ZERO   # Current flick velocity
@@ -141,6 +169,9 @@ func _ready() -> void:
   if has_node("SoundPlayer"):
     sound_player = get_node("SoundPlayer")
   
+  # Set up the metadata to link back to this interactable
+  interaction_area.set_meta("parent_interactable", self)
+  
   print("Interactable object initialized: ", name)
   print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate, ", Can grab: ", can_grab)
 
@@ -153,6 +184,9 @@ func _process(delta: float) -> void:
   
   # Match the scale and rotation of the interaction area with the models one
   _update_area_transform()
+  
+  # Update detection area to match model transforms if needed
+  _update_detection_area()
   
   # Check for two-hand scaling (requires selection)
   if hands_pinching["left"] && hands_pinching["right"] && can_scale && !is_scaling:
@@ -185,8 +219,22 @@ func _process(delta: float) -> void:
     _update_rotation(delta)
   
   # Apply ground snapping when not being manipulated
-  if snap_to_ground && !is_moving && !flick_active && !is_grabbed:
+  if snap_to_ground && !is_moving && !flick_active && !is_grabbed && !is_snapping_back && !is_snapped_to_zone:
     _snap_to_ground()
+
+# Make sure detection area stays aligned with the object
+func _update_detection_area() -> void:
+  var detection_area = find_child("DetectionArea")
+  if detection_area:
+    # The detection area moves with the parent automatically,
+    # but we may need to update its scale if the model has been scaled
+    var collision = detection_area.find_child("CollisionShape")
+    if collision && model:
+      # If we're using a box shape, scale it with the model
+      if collision.shape is BoxShape3D:
+        var box_shape = collision.shape as BoxShape3D
+        var shape_scale_ratio = box_shape.size / model.scale
+        box_shape.size = model.scale * shape_scale_ratio
 
 func _physics_process(delta: float) -> void:
   # Handle flick physics if active
@@ -258,8 +306,16 @@ func _on_pinch_started(hand_name: String) -> void:
   print("Pinch started: ", hand_name)
   hands_pinching[hand_name] = true
   
+  # Stop any ongoing snap-back or snapping animation
+  if is_snapping_back:
+    _cancel_snap_back()
+  
   # If we're not in any interaction mode
   if !is_scaling && !is_moving && !is_rotating && !is_grabbed:
+    # If this object is snapped to a zone, unsnap it when grabbed
+    if is_snapped_to_zone && current_zone:
+      unsnap_from_zone()
+      
     # Single hand - check if the pinch started inside or outside the interaction area
     if hands_in_area[hand_name] && can_move:
       # Pinch inside area - start movement mode (allowed for all objects)
@@ -312,6 +368,9 @@ func _start_grab(hand_name: String) -> void:
   original_parent = get_parent()
   pre_grab_transform = global_transform
   
+  # Store the snap-back target transform
+  snap_back_target_transform = pre_grab_transform
+  
   # Get the hand attachment point
   var attachment_point = XRRig.AttachmentPoint.LEFT_HAND if hand_name == "left" else XRRig.AttachmentPoint.RIGHT_HAND
   var attachment_node = XRRig.instance.get_attachment_point_node(attachment_point)
@@ -356,7 +415,18 @@ func _end_grab() -> void:
     
     # Restore global transform to maintain position and rotation in world space
     global_transform = current_global_transform
-  
+    
+    # Check if we should snap to a nearby zone
+    if can_snap && snap_to_closest_zone && nearby_zones.size() > 0:
+      var closest_zone = _find_closest_zone()
+      if closest_zone && closest_zone.global_position.distance_to(global_position) <= snap_zone_max_distance:
+        _snap_to_zone(closest_zone)
+      elif snap_back_when_released:
+        _start_snap_back_animation()
+    elif snap_back_when_released:
+      # If no zones to snap to, snap back to original position
+      _start_snap_back_animation()
+    
   # Play release sound
   if sound_player && release_sound:
     sound_player.stream = release_sound
@@ -369,6 +439,42 @@ func _end_grab() -> void:
   
   # Emit released signal
   emit_signal("released", previous_hand)
+
+func _start_snap_back_animation() -> void:
+  print("Starting snap back animation")
+  is_snapping_back = true
+  
+  # Cancel any existing tween
+  _cancel_snap_back()
+  
+  # Create a new tween for the snap back animation
+  snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+  
+  # Animate position and rotation back to original transform
+  snap_back_tween.tween_property(self, "global_position", snap_back_target_transform.origin, snap_back_speed)
+  
+  # Extract the rotation from the transform's basis
+  var target_rotation = snap_back_target_transform.basis.get_euler()
+  snap_back_tween.parallel().tween_property(self, "global_rotation", target_rotation, snap_back_speed)
+  
+  # Connect to the tween's finished signal
+  snap_back_tween.finished.connect(_on_snap_back_complete)
+  
+  # Play snap back sound if available
+  if sound_player && snap_back_sound:
+    sound_player.stream = snap_back_sound
+    sound_player.play()
+
+func _cancel_snap_back() -> void:
+  if snap_back_tween && snap_back_tween.is_valid():
+    snap_back_tween.kill()
+    snap_back_tween = null
+  is_snapping_back = false
+
+func _on_snap_back_complete() -> void:
+  print("Snap back animation complete")
+  is_snapping_back = false
+  snap_back_tween = null
 
 func _start_movement(hand_name: String) -> void:
   _reset_all_modes()
@@ -517,6 +623,9 @@ func _reset_all_modes() -> void:
   flick_velocity = Vector3.ZERO
   rotation_flick_active = false
   rotation_flick_velocity = 0.0
+  
+  # Cancel any snap back animation
+  _cancel_snap_back()
   
   # Reset sound tracking variables
   move_distance_accumulated = 0.0
@@ -709,6 +818,104 @@ func _snap_to_ground() -> void:
       collision_point.y + (model.scale.y * 0.5),
       current_pos.z
     )
+
+func _find_closest_zone() -> SnappingZone:
+  if nearby_zones.size() == 0:
+    return null
+    
+  var closest_zone: SnappingZone = null
+  var closest_distance: float = INF
+  
+  for zone in nearby_zones:
+    if !zone.enabled:
+      continue
+      
+    if zone.object_filter_tag && zone.object_filter_tag != tag:
+      continue
+      
+    var distance = global_position.distance_to(zone.global_position)
+    if distance < closest_distance:
+      closest_distance = distance
+      closest_zone = zone
+      
+  return closest_zone
+
+func _snap_to_zone(zone: SnappingZone) -> void:
+  if !zone || is_snapped_to_zone:
+    return
+    
+  print("Snapping to zone: ", zone.name)
+  
+  # Set up animation
+  _cancel_snap_back()  # Cancel any existing animations
+  is_snapping_back = true  # Reuse the same flag
+  
+  # Get target position and rotation from the zone
+  var target_position = zone.get_snap_position()
+  var target_rotation = zone.get_snap_rotation()
+  
+  # Create animation tween
+  snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+  snap_back_tween.tween_property(self, "global_position", target_position, snap_back_speed)
+  snap_back_tween.parallel().tween_property(self, "global_rotation", target_rotation, snap_back_speed)
+  
+  # Connect completion signal
+  snap_back_tween.finished.connect(func(): _on_snap_to_zone_complete(zone))
+  
+  # Play snap sound
+  if sound_player && snap_to_zone_sound:
+    sound_player.stream = snap_to_zone_sound
+    sound_player.play()
+
+func _on_snap_to_zone_complete(zone: SnappingZone) -> void:
+  is_snapping_back = false
+  snap_back_tween = null
+  
+  # Tell the zone this object has snapped to it
+  if zone && zone.snap_object(self):
+    current_zone = zone
+    is_snapped_to_zone = true
+    
+    # TODO
+    #reparent(current_zone)
+    
+    emit_signal("snapped_to_zone", zone)
+
+func snap_to_zone(zone: SnappingZone) -> void:
+  if zone && !is_grabbed && !is_snapped_to_zone:
+    current_zone = zone
+    
+    is_snapped_to_zone = true
+    emit_signal("snapped_to_zone", zone)
+
+func unsnap_from_zone() -> void:
+  if is_snapped_to_zone && current_zone:
+    # Tell the zone we're unsnapping (if it doesn't already know)
+    if current_zone.snapped_object == self:
+      current_zone.unsnap_object(self)
+    
+    # Reset state
+    var previous_zone = current_zone
+    current_zone = null
+    is_snapped_to_zone = false
+    
+    # Play sound
+    if sound_player && unsnap_from_zone_sound:
+      sound_player.stream = unsnap_from_zone_sound
+      sound_player.play()
+    
+    # Emit signal
+    emit_signal("unsnapped_from_zone")
+
+func entered_snapping_zone(zone: SnappingZone) -> void:
+  if zone && !nearby_zones.has(zone):
+    nearby_zones.append(zone)
+    emit_signal("entered_zone", zone)
+
+func exited_snapping_zone(zone: SnappingZone) -> void:
+  if zone && nearby_zones.has(zone):
+    nearby_zones.erase(zone)
+    emit_signal("exited_zone", zone)
 
 func _play_move_sound() -> void:
   if sound_player && move_sound:

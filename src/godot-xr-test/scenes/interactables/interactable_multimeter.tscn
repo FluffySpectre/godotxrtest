@@ -1,6 +1,7 @@
-[gd_scene load_steps=13 format=3 uid="uid://cxi5gkvlpppqf"]
+[gd_scene load_steps=14 format=3 uid="uid://cxi5gkvlpppqf"]
 
 [ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_8jmwx"]
+[ext_resource type="AudioStream" uid="uid://xoeciiuu7ype" path="res://assets/sfx/click.wav" id="2_udrk1"]
 [ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="3_21lvo"]
 [ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="4_3dwhu"]
 [ext_resource type="Material" uid="uid://bprraxubu53yv" path="res://assets/materials/interaction_wireframe_area.tres" id="4_udrk1"]
@@ -34,7 +35,10 @@ can_scale = false
 can_move = false
 can_rotate = false
 maintain_global_rotation = true
-metadata/_custom_type_script = "uid://bd4ss8ud3hrk6"
+enable_flick = false
+enable_rotation_flick = false
+grab_sound = ExtResource("2_udrk1")
+release_sound = ExtResource("2_udrk1")
 
 [node name="Model" type="Node3D" parent="."]
 
