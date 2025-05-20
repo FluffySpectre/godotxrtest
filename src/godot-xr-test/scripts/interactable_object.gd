@@ -11,6 +11,7 @@ signal selected
 signal selection_lost
 signal grabbed(hand_name: String)
 signal released(hand_name: String)
+signal hand_transfer(previous_hand: String, new_hand: String)
 signal snapped_to_zone(zone: SnappingZone)
 signal unsnapped_from_zone()
 signal entered_zone(zone: SnappingZone)
@@ -20,7 +21,7 @@ signal exited_zone(zone: SnappingZone)
 @export var can_scale: bool = true
 @export var can_move: bool = true
 @export var can_rotate: bool = true
-@export var can_grab: bool = true
+@export var can_grab: bool = false
 @export var min_scale: float = 0.1
 @export var max_scale: float = 2.0
 @export var rotation_speed: float = 200.0
@@ -310,6 +311,12 @@ func _on_pinch_started(hand_name: String) -> void:
   if is_snapping_back:
     _cancel_snap_back()
   
+  # Check if this object is already grabbed by the other hand
+  if is_grabbed && active_hand != hand_name:
+    # This is a hand transfer situation - transfer from current hand to new hand
+    _transfer_to_hand(hand_name)
+    return
+  
   # If we're not in any interaction mode
   if !is_scaling && !is_moving && !is_rotating && !is_grabbed:
     # If this object is snapped to a zone, unsnap it when grabbed
@@ -353,6 +360,40 @@ func _on_pinch_ended(hand_name: String) -> void:
     if is_grabbed:
       print("Ending grabbing mode")
       _end_grab()
+
+func _transfer_to_hand(new_hand_name: String) -> void:
+  if !is_grabbed || new_hand_name == active_hand:
+    return
+  
+  print("Transferring object from " + active_hand + " hand to " + new_hand_name + " hand")
+  
+  var previous_hand = active_hand
+  
+  # Get the new hand attachment point
+  var attachment_point = XRRig.AttachmentPoint.LEFT_HAND if new_hand_name == "left" else XRRig.AttachmentPoint.RIGHT_HAND
+  var attachment_node = XRRig.instance.get_attachment_point_node(attachment_point)
+  
+  if attachment_node:
+    # Save current global transform
+    var current_global_transform = global_transform
+    
+    interaction_zone_manager.clear_interaction(previous_hand)
+    interaction_zone_manager.register_interaction(new_hand_name, self)
+    
+    active_hand = new_hand_name
+    
+    reparent(attachment_node)
+    
+    # Apply offset if needed
+    if grab_offset != Vector3.ZERO:
+      position = grab_offset
+    
+    if maintain_global_rotation:
+      global_rotation = current_global_transform.basis.get_euler()
+    
+    emit_signal("hand_transfer", previous_hand, new_hand_name)
+  else:
+    print("ERROR: Could not find attachment point for hand: ", new_hand_name)
 
 func _start_grab(hand_name: String) -> void:
   if is_grabbed:
