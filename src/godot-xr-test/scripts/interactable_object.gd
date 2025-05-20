@@ -269,7 +269,7 @@ func _update_hands_in_area() -> void:
         else:
           print(hand_name, " hand exited interaction area")
           if active_hand == "" || active_hand != hand_name:  # Only turn off highlight if not currently interacting
-              interaction_area.set_highlight(false)
+            interaction_area.set_highlight(false)
 
 func _update_area_transform() -> void:
   if !model:
