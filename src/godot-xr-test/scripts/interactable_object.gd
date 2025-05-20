@@ -364,6 +364,9 @@ func _start_grab(hand_name: String) -> void:
   is_grabbed = true
   active_hand = hand_name
   
+  # Register this interaction with the interaction zone manager
+  interaction_zone_manager.register_interaction(hand_name, self)
+  
   # Store original parent and transform
   original_parent = get_parent()
   pre_grab_transform = global_transform
@@ -437,6 +440,9 @@ func _end_grab() -> void:
   is_grabbed = false
   active_hand = ""
   
+  # Clear the interaction registration
+  interaction_zone_manager.clear_interaction(previous_hand)
+  
   # Emit released signal
   emit_signal("released", previous_hand)
 
@@ -483,6 +489,9 @@ func _start_movement(hand_name: String) -> void:
   active_hand = hand_name
   movement_started = true  # For simplicity, we're starting movement immediately
   
+  # Register this interaction with the interaction zone manager
+  interaction_zone_manager.register_interaction(hand_name, self)
+  
   # Store initial positions
   initial_pinch_position = last_hand_positions[hand_name]
   initial_object_position = global_transform.origin
@@ -508,6 +517,9 @@ func _end_movement() -> void:
   var previous_hand = active_hand
   active_hand = ""
   
+  # Clear the interaction registration
+  interaction_zone_manager.clear_interaction(previous_hand)
+  
   # Check if we should apply flick
   if enable_flick && hand_velocity.length() > flick_speed_threshold:
     flick_velocity = hand_velocity * flick_force_multiplier
@@ -531,6 +543,9 @@ func _prepare_rotation(hand_name: String) -> void:
   is_rotating = true
   active_hand = hand_name
   is_rotation_active = false  # We'll set this to true when the threshold is crossed
+  
+  # Register this interaction with the interaction zone manager
+  interaction_zone_manager.register_interaction(hand_name, self)
   
   # Store initial positions
   initial_pinch_position = last_hand_positions[hand_name]
@@ -561,6 +576,9 @@ func _end_rotation() -> void:
   var previous_hand = active_hand
   active_hand = ""
   
+  # Clear the interaction registration
+  interaction_zone_manager.clear_interaction(previous_hand)
+  
   # Check if we should apply rotation flick
   if enable_rotation_flick && abs(rotation_velocity) > rotation_flick_speed_threshold:
     rotation_flick_velocity = rotation_velocity * rotation_flick_force_multiplier
@@ -587,6 +605,10 @@ func _start_scaling() -> void:
   
   is_scaling = true
   
+  # Register both hands as interacting with this object
+  interaction_zone_manager.register_interaction("left", self)
+  interaction_zone_manager.register_interaction("right", self)
+  
   # Get hand positions
   var left_hand_pos = last_hand_positions["left"]
   var right_hand_pos = last_hand_positions["right"]
@@ -608,6 +630,11 @@ func _end_scaling() -> void:
     return
       
   is_scaling = false
+  
+  # Clear both hand registrations since scaling uses both hands
+  interaction_zone_manager.clear_interaction("left")
+  interaction_zone_manager.clear_interaction("right")
+  
   print("Scaling ended")
   emit_signal("scaling_ended")
 
