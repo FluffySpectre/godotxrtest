@@ -13,7 +13,6 @@ class_name ShadowBlob extends Node3D
 @export var shadow_size: Vector2 = Vector2(0.5, 0.5)
 
 var _shadow_sprite: Sprite3D
-var _raycast: RayCast3D
 
 func _ready() -> void:
   # Create shadow sprite
@@ -29,19 +28,13 @@ func _ready() -> void:
     shadow_sprite_target.add_child.call_deferred(_shadow_sprite)
   else:
     add_child(_shadow_sprite)
-  
-  # Create raycast
-  _raycast = RayCast3D.new()
-  _raycast.enabled = true
-  _raycast.target_position = Vector3(0, -max_distance * 2, 0)
-  _raycast.collision_mask = 0b10000
-  add_child(_raycast)
-  _raycast.position.y = 0.05 # Offset it a bit, so the Raycast hits the ground even if the node is at zero positon
-
+    
 func _process(delta: float) -> void:
-  if _raycast.is_colliding():
-    var hit_point = _raycast.get_collision_point()
+  var raycast_result = _cast_downward_ray()
+  if !raycast_result.is_empty():
+    var hit_point = raycast_result.position
     _shadow_sprite.global_position = hit_point + Vector3(0, 0.01, 0)
+    _shadow_sprite.global_rotation = Vector3(0.0, _shadow_sprite.global_rotation.y, 0.0)
     
     # Adjust shadow opacity based on distance
     var distance = global_position.y - hit_point.y
@@ -49,3 +42,16 @@ func _process(delta: float) -> void:
     _shadow_sprite.modulate.a = lerp(_shadow_sprite.modulate.a, opacity_factor, delta * 10.0)
   else:
     _shadow_sprite.modulate.a = lerp(_shadow_sprite.modulate.a, 0.0, delta * 2.0)
+
+func _cast_downward_ray():
+  var space_state = get_world_3d().direct_space_state
+
+  var from = global_transform.origin
+  from.y += 0.05 # Offset it a bit, so the Raycast hits the ground even if the node is at zero positon
+  var to = from - Vector3.UP * max_distance
+
+  var query = PhysicsRayQueryParameters3D.create(from, to)
+  query.collision_mask = 0b10000
+  var result = space_state.intersect_ray(query)
+
+  return result

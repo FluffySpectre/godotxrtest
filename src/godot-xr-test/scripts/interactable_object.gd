@@ -9,16 +9,24 @@ signal rotation_started(hand_name: String)
 signal rotation_ended(hand_name: String)
 signal selected
 signal selection_lost
+signal grabbed(hand_name: String)
+signal released(hand_name: String)
 
 # Properties
 @export var can_scale: bool = true
 @export var can_move: bool = true
 @export var can_rotate: bool = true
+@export var can_grab: bool = true
 @export var min_scale: float = 0.1
 @export var max_scale: float = 2.0
 @export var rotation_speed: float = 200.0
 @export var snap_to_ground: bool = false
 @export var rotation_threshold: float = 0.02  # Distance in meters before rotation starts
+
+# Grab Properties
+@export_group("Grab Settings")
+@export var grab_offset: Vector3 = Vector3(0, 0, 0)  # Offset from the hand attachment point
+@export var maintain_global_rotation: bool = false  # Whether to maintain world rotation when grabbed
 
 # Flick Properties
 @export_group("Flick Settings")
@@ -38,6 +46,8 @@ signal selection_lost
 @export var move_sound: AudioStream  # Sound to play during movement
 @export var rotation_sound: AudioStream  # Sound to play during rotation  
 @export var scale_sound: AudioStream  # Sound to play during scaling
+@export var grab_sound: AudioStream  # Sound for grabbing
+@export var release_sound: AudioStream  # Sound for releasing
 @export var move_sound_interval: float = 0.1  # Distance in meters between sound clicks
 @export var rotation_sound_interval: float = 0.15  # Radians between sound clicks
 @export var scale_sound_interval: float = 0.1  # Scale factor change between sound clicks
@@ -53,6 +63,7 @@ signal selection_lost
 var is_moving: bool = false            # Tracking if we're in movement mode
 var is_scaling: bool = false           # Tracking if we're in scaling mode
 var is_rotating: bool = false          # Tracking if we're in rotation mode
+var is_grabbed: bool = false           # Tracking if the object is currently grabbed
 var movement_started: bool = false     # Tracking if we've crossed the movement threshold
 var is_rotation_active: bool = false   # Tracking if we've crossed the rotation threshold
 var active_hand: String = ""           # Which hand is controlling movement/rotation
@@ -68,6 +79,10 @@ var hands_in_area: Dictionary = {"left": false, "right": false}  # Track which h
 var cumulative_movement: float = 0.0
 var last_hand_positions: Dictionary = {"left": Vector3.ZERO, "right": Vector3.ZERO}
 var is_selected: bool = false
+var original_parent: Node = null       # Store the original parent for when we're detaching
+
+# Grab state variables
+var pre_grab_transform: Transform3D    # Store the transform before grabbing
 
 # Flick state variables
 var flick_velocity: Vector3 = Vector3.ZERO   # Current flick velocity
@@ -127,10 +142,7 @@ func _ready() -> void:
     sound_player = get_node("SoundPlayer")
   
   print("Interactable object initialized: ", name)
-  print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate)
-  print("Rotation threshold: ", rotation_threshold)
-  print("Flick enabled: ", enable_flick)
-  print("Rotation flick enabled: ", enable_rotation_flick)
+  print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate, ", Can grab: ", can_grab)
 
 func _process(delta: float) -> void:
   # Update hand positions
@@ -173,7 +185,7 @@ func _process(delta: float) -> void:
     _update_rotation(delta)
   
   # Apply ground snapping when not being manipulated
-  if snap_to_ground && !is_moving && !flick_active:
+  if snap_to_ground && !is_moving && !flick_active && !is_grabbed:
     _snap_to_ground()
 
 func _physics_process(delta: float) -> void:
@@ -247,12 +259,14 @@ func _on_pinch_started(hand_name: String) -> void:
   hands_pinching[hand_name] = true
   
   # If we're not in any interaction mode
-  if !is_scaling && !is_moving && !is_rotating:
+  if !is_scaling && !is_moving && !is_rotating && !is_grabbed:
     # Single hand - check if the pinch started inside or outside the interaction area
     if hands_in_area[hand_name] && can_move:
       # Pinch inside area - start movement mode (allowed for all objects)
       print("Pinch inside interaction area, preparing movement with hand: ", hand_name)
       _start_movement(hand_name)
+    elif hands_in_area[hand_name] && can_grab:
+      _start_grab(hand_name)
     elif !hands_in_area[hand_name] && can_rotate:
       # Pinch outside area - prepare rotation mode (requires selection)
       if is_selected:
@@ -280,6 +294,81 @@ func _on_pinch_ended(hand_name: String) -> void:
     if is_rotating:
       print("Ending rotation mode")
       _end_rotation()
+    if is_grabbed:
+      print("Ending grabbing mode")
+      _end_grab()
+
+func _start_grab(hand_name: String) -> void:
+  if is_grabbed:
+    return
+  
+  _reset_all_modes()
+
+  print("Starting grab with hand: ", hand_name)
+  is_grabbed = true
+  active_hand = hand_name
+  
+  # Store original parent and transform
+  original_parent = get_parent()
+  pre_grab_transform = global_transform
+  
+  # Get the hand attachment point
+  var attachment_point = XRRig.AttachmentPoint.LEFT_HAND if hand_name == "left" else XRRig.AttachmentPoint.RIGHT_HAND
+  var attachment_node = XRRig.instance.get_attachment_point_node(attachment_point)
+  
+  if attachment_node:
+    # Reparent to the hand
+    reparent(attachment_node)
+    
+    # Apply offset if needed
+    if grab_offset != Vector3.ZERO:
+      position = grab_offset
+    
+    # Maintain global rotation if specified
+    if maintain_global_rotation:
+      global_rotation = pre_grab_transform.basis.get_euler()
+    
+    # Play grab sound
+    if sound_player && grab_sound:
+      sound_player.stream = grab_sound
+      sound_player.play()
+    
+    # Emit grabbed signal
+    emit_signal("grabbed", hand_name)
+  else:
+    print("ERROR: Could not find attachment point for hand: ", hand_name)
+    is_grabbed = false
+    active_hand = ""
+
+func _end_grab() -> void:
+  if !is_grabbed:
+    return
+    
+  print("Ending grab")
+  
+  # Return to original parent
+  if original_parent:
+    # Save current global transform
+    var current_global_transform = global_transform
+    
+    # Reparent back to original parent
+    reparent(original_parent)
+    
+    # Restore global transform to maintain position and rotation in world space
+    global_transform = current_global_transform
+  
+  # Play release sound
+  if sound_player && release_sound:
+    sound_player.stream = release_sound
+    sound_player.play()
+  
+  # Reset grab state
+  var previous_hand = active_hand
+  is_grabbed = false
+  active_hand = ""
+  
+  # Emit released signal
+  emit_signal("released", previous_hand)
 
 func _start_movement(hand_name: String) -> void:
   _reset_all_modes()
