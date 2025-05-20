@@ -43,7 +43,7 @@ signal exited_zone(zone: SnappingZone)
 @export var can_snap: bool = true  # Whether this object can snap to SnappingZones
 @export var snap_back_when_released: bool = false  # Whether to return to original position when released
 @export var snap_to_closest_zone: bool = true  # Whether to snap to closest zone when released
-@export var snap_back_speed: float = 0.5  # Speed of snap back/zone snap animation (seconds)
+@export var snap_back_speed: float = 0.25  # Speed of snap back/zone snap animation (seconds)
 @export var snap_zone_max_distance: float = 0.5  # Maximum distance to consider for auto-snapping to zones
 
 # Flick Properties
