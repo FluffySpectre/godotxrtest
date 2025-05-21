@@ -298,16 +298,15 @@ func _on_pinch_started(hand_name: String) -> void:
   
   # Check if this object is already grabbed by the other hand
   if is_grabbed && active_hand != hand_name:
-    # This is a hand transfer situation - transfer from current hand to new hand
-    _transfer_to_hand(hand_name)
+    if hands_in_area[hand_name]:
+      _transfer_to_hand(hand_name)
     return
   
-  # If we're not in any interaction mode
   if !is_scaling && !is_moving && !is_rotating && !is_grabbed:
     # If this object is snapped to a zone, unsnap it when grabbed
     if is_snapped_to_zone && current_zone:
       unsnap_from_zone()
-      
+    
     # Single hand - check if the pinch started inside or outside the interaction area
     if hands_in_area[hand_name] && can_move:
       # Pinch inside area - start movement mode (allowed for all objects)

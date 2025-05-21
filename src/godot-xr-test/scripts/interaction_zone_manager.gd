@@ -26,7 +26,6 @@ var _direct_interactions: Dictionary = {"left": false, "right": false}
 var _objects_in_direct_range: Dictionary = {"left": [], "right": []}
 
 func _ready() -> void:
-  # Connect to hand interaction manager
   if hand_interaction_manager:
     _connect_to_hand_manager()
   else:
@@ -121,14 +120,6 @@ func _update_objects_in_direct_range() -> void:
         var interaction_area = obj.interaction_area
         if interaction_area && interaction_area.is_position_in_area(hand_pos):
           _objects_in_direct_range[hand_name].append(obj)
-
-# Helper to find all InteractableObjects in the scene
-func _find_interactables_recursive(node: Node, results: Array) -> void:
-  if node is InteractableObject:
-    results.append(node)
-  
-  for child in node.get_children():
-    _find_interactables_recursive(child, results)
 
 func _connect_to_hand_manager() -> void:
   # Connect to hand interaction manager signals
