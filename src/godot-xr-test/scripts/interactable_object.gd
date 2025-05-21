@@ -31,7 +31,6 @@ signal exited_zone(zone: SnappingZone)
 # Object Properties
 @export_group("Object Settings")
 @export var tag: String = ""  # Tag for filtering in SnappingZones
-@export var object_type: String = ""  # Type for filtering
 
 # Grab Properties
 @export_group("Grab Settings")
@@ -189,9 +188,6 @@ func _process(delta: float) -> void:
   # Match the scale and rotation of the interaction area with the models one
   _update_area_transform()
   
-  # Update detection area to match model transforms if needed
-  _update_detection_area()
-  
   # Check for two-hand scaling (requires selection)
   if hands_pinching["left"] && hands_pinching["right"] && can_scale && !is_scaling:
     # Only allow scaling if object is selected
@@ -225,20 +221,6 @@ func _process(delta: float) -> void:
   # Apply ground snapping when not being manipulated
   if snap_to_ground && !is_moving && !flick_active && !is_grabbed && !is_snapping_back && !is_snapped_to_zone:
     _snap_to_ground()
-
-# Make sure detection area stays aligned with the object
-func _update_detection_area() -> void:
-  var detection_area = find_child("DetectionArea")
-  if detection_area:
-    # The detection area moves with the parent automatically,
-    # but we may need to update its scale if the model has been scaled
-    var collision = detection_area.find_child("CollisionShape")
-    if collision && model:
-      # If we're using a box shape, scale it with the model
-      if collision.shape is BoxShape3D:
-        var box_shape = collision.shape as BoxShape3D
-        var shape_scale_ratio = box_shape.size / model.scale
-        box_shape.size = model.scale * shape_scale_ratio
 
 func _physics_process(delta: float) -> void:
   # Handle flick physics if active

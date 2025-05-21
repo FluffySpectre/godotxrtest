@@ -38,16 +38,12 @@ func gather_objects() -> void:
   forward_direction.y = 0
   forward_direction = forward_direction.normalized()
   
-  # Get all top-level InteractableObjects in the scene
+  # Find all InteractableObjects which are in group "interactable"
   var interactable_objects = []
-  var root = get_tree().root
-  var main_scene = root.get_child(root.get_child_count() - 1)
-  
-  # Find all direct children of the main scene that are InteractableObjects
-  # and are gatherable
-  for child in main_scene.get_children():
-    if child is InteractableObject && !(child.has_meta("not_gatherable") && child.get_meta("not_gatherable")):
-      interactable_objects.append(child)
+  var interactables_in_group = get_tree().get_nodes_in_group("interactable")
+  for group_object in interactables_in_group:
+    if group_object is InteractableObject && !(group_object.has_meta("not_gatherable") && group_object.get_meta("not_gatherable")):
+      interactable_objects.append(group_object)
   
   # If we don't have any objects, exit early
   if interactable_objects.size() == 0:
