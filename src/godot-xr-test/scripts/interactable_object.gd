@@ -173,6 +173,9 @@ func _ready() -> void:
   # Set up the metadata to link back to this interactable
   interaction_area.set_meta("parent_interactable", self)
   
+  # Add to interactable group to make it easier to find all interactables
+  add_to_group("interactable")
+  
   print("Interactable object initialized: ", name)
   print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate, ", Can grab: ", can_grab)
 
@@ -327,16 +330,20 @@ func _on_pinch_started(hand_name: String) -> void:
     if hands_in_area[hand_name] && can_move:
       # Pinch inside area - start movement mode (allowed for all objects)
       print("Pinch inside interaction area, preparing movement with hand: ", hand_name)
-      _start_movement(hand_name)
+      _start_movement(hand_name, true)  # Pass true to indicate direct interaction
     elif hands_in_area[hand_name] && can_grab:
-      _start_grab(hand_name)
+      _start_grab(hand_name, true)  # Pass true to indicate direct interaction
     elif !hands_in_area[hand_name] && can_rotate:
-      # Pinch outside area - prepare rotation mode (requires selection)
-      if is_selected:
-        print("Pinch outside interaction area, preparing rotation with hand: ", hand_name)
-        _prepare_rotation(hand_name)
-      else:
+      # Only start rotation if no direct interactions are available for this hand
+      if !interaction_zone_manager.has_direct_interactions_available(hand_name):
+        # Pinch outside area - prepare rotation mode (requires selection)
+        if is_selected:
+          print("Pinch outside interaction area, preparing rotation with hand: ", hand_name)
+          _prepare_rotation(hand_name, false)  # Pass false to indicate ranged interaction
+        else:
           print("Rotation requires object to be selected first")
+      else:
+        print("Ignoring rotation as direct interactions are available")
     else:
       print("Hand is pinching but not eligible for interaction")
 
@@ -395,18 +402,18 @@ func _transfer_to_hand(new_hand_name: String) -> void:
   else:
     print("ERROR: Could not find attachment point for hand: ", new_hand_name)
 
-func _start_grab(hand_name: String) -> void:
+func _start_grab(hand_name: String, is_direct: bool = false) -> void:
   if is_grabbed:
     return
   
+  if !interaction_zone_manager.register_interaction(hand_name, self, is_direct):
+    return
+    
   _reset_all_modes()
 
   print("Starting grab with hand: ", hand_name)
   is_grabbed = true
   active_hand = hand_name
-  
-  # Register this interaction with the interaction zone manager
-  interaction_zone_manager.register_interaction(hand_name, self)
   
   # Store original parent and transform
   original_parent = get_parent()
@@ -523,15 +530,15 @@ func _on_snap_back_complete() -> void:
   is_snapping_back = false
   snap_back_tween = null
 
-func _start_movement(hand_name: String) -> void:
+func _start_movement(hand_name: String, is_direct: bool = false) -> void:
   _reset_all_modes()
   
+  if !interaction_zone_manager.register_interaction(hand_name, self, is_direct):
+    return
+    
   is_moving = true
   active_hand = hand_name
   movement_started = true  # For simplicity, we're starting movement immediately
-  
-  # Register this interaction with the interaction zone manager
-  interaction_zone_manager.register_interaction(hand_name, self)
   
   # Store initial positions
   initial_pinch_position = last_hand_positions[hand_name]
@@ -578,15 +585,15 @@ func _end_movement() -> void:
   print("Movement ended")
   emit_signal("pinch_move_ended", previous_hand)
 
-func _prepare_rotation(hand_name: String) -> void:
+func _prepare_rotation(hand_name: String, is_direct: bool = false) -> void:
+  if !interaction_zone_manager.register_interaction(hand_name, self, is_direct):
+    return
+    
   _reset_all_modes()
   
   is_rotating = true
   active_hand = hand_name
   is_rotation_active = false  # We'll set this to true when the threshold is crossed
-  
-  # Register this interaction with the interaction zone manager
-  interaction_zone_manager.register_interaction(hand_name, self)
   
   # Store initial positions
   initial_pinch_position = last_hand_positions[hand_name]
@@ -642,13 +649,18 @@ func _start_scaling() -> void:
     print("Cannot start scaling: missing hand positions")
     return
   
+  # Check if any direct interactions are active
+  if interaction_zone_manager.has_direct_interaction_active("left") || interaction_zone_manager.has_direct_interaction_active("right"):
+    print("Cannot start scaling: direct interaction in progress")
+    return
+  
+  # Try to register this interaction for both hands
+  if !interaction_zone_manager.register_interaction("left", self, false) || !interaction_zone_manager.register_interaction("right", self, false):
+    return
+    
   _reset_all_modes()
   
   is_scaling = true
-  
-  # Register both hands as interacting with this object
-  interaction_zone_manager.register_interaction("left", self)
-  interaction_zone_manager.register_interaction("right", self)
   
   # Get hand positions
   var left_hand_pos = last_hand_positions["left"]
