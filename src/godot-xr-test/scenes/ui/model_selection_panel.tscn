@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=3 uid="uid://btunrela1o7ib"]
+
+[ext_resource type="Script" uid="uid://bkle5nqp7uxko" path="res://scripts/floating_view_panel.gd" id="1_t3vw4"]
+[ext_resource type="PackedScene" uid="uid://bkgjtu8qugixo" path="res://scenes/poke_button.tscn" id="2_pfutm"]
+
+[node name="ModelSelectionPanel" type="Node3D"]
+script = ExtResource("1_t3vw4")
+panel_width = 0.25
+panel_height = 0.15
+panel_color = Color(0.213097, 0.22606, 0.22884, 0.501961)
+position_offset = Vector3(0, -0.1, 0)
+metadata/_custom_type_script = "uid://bkle5nqp7uxko"
+
+[node name="TitleLabel" type="Label3D" parent="."]
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0.0553335, 0.00199997)
+text = "Model selection"
+font_size = 64
+outline_size = 1
+
+[node name="PokeButton1" parent="." instance=ExtResource("2_pfutm")]
+transform = Transform3D(2.5, 0, 0, 0, -1.09278e-07, -2.5, 0, 2.5, -1.09278e-07, -0.0701458, -0.00496101, 0.00300002)
+press_depth = 0.002
+
+[node name="PokeButton2" parent="." instance=ExtResource("2_pfutm")]
+transform = Transform3D(2.5, 0, 0, 0, -1.09278e-07, -2.5, 0, 2.5, -1.09278e-07, 0.00173342, -0.00496101, 0.00300002)
+press_depth = 0.002
+
+[node name="PokeButton3" parent="." instance=ExtResource("2_pfutm")]
+transform = Transform3D(2.5, 0, 0, 0, -1.09278e-07, -2.5, 0, 2.5, -1.09278e-07, 0.0724986, -0.00496101, 0.00300002)
+press_depth = 0.002
