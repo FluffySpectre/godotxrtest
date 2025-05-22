@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://cxi5gkvlpppqf"]
+[gd_scene load_steps=22 format=3 uid="uid://cxi5gkvlpppqf"]
 
 [ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_8jmwx"]
 [ext_resource type="AudioStream" uid="uid://xoeciiuu7ype" path="res://assets/sfx/click.wav" id="2_udrk1"]
@@ -11,6 +11,8 @@
 [ext_resource type="Material" uid="uid://c6dtlgo8toq3w" path="res://assets/materials/interaction_area.tres" id="5_k4fop"]
 [ext_resource type="Script" uid="uid://cgemk3cehxxpa" path="res://scripts/shadow_blob.gd" id="6_1u08e"]
 [ext_resource type="Texture2D" uid="uid://dexgmdgoluu3a" path="res://assets/textures/shadow_blob_rectangular.png" id="7_drqjg"]
+[ext_resource type="PackedScene" uid="uid://d1i6typ2ok0wq" path="res://scenes/interactables/interactable_multimeter_probe.tscn" id="12_d472q"]
+[ext_resource type="PackedScene" uid="uid://coiu6lp8sjwfs" path="res://scenes/snapping_zone.tscn" id="13_p1bsh"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_cescp"]
 size = Vector3(0.07, 0.12, 0.04)
@@ -32,7 +34,21 @@ size = Vector3(0.1, 0.15, 0.1)
 [sub_resource type="BoxMesh" id="BoxMesh_efxa6"]
 material = ExtResource("5_k4fop")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_p1bsh"]
+size = Vector3(0.0279785, 0.15, 0.0289429)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pws2o"]
+transparency = 1
+depth_draw_mode = 1
+albedo_color = Color(0, 0.584314, 0.894118, 0.407843)
+
+[sub_resource type="BoxMesh" id="BoxMesh_p1bsh"]
+material = SubResource("StandardMaterial3D_pws2o")
+size = Vector3(0.0279785, 0.15, 0.0289429)
+
 [node name="InteractableMultimeter" type="Node3D"]
+
+[node name="InteractableMultimeter" type="Node3D" parent="."]
 script = ExtResource("1_8jmwx")
 can_scale = false
 can_move = false
@@ -44,16 +60,16 @@ enable_rotation_flick = false
 grab_sound = ExtResource("2_udrk1")
 release_sound = ExtResource("2_udrk1")
 
-[node name="Model" type="Node3D" parent="."]
+[node name="Model" type="Node3D" parent="InteractableMultimeter"]
 
-[node name="Body" type="MeshInstance3D" parent="Model"]
+[node name="Body" type="MeshInstance3D" parent="InteractableMultimeter/Model"]
 mesh = SubResource("BoxMesh_cescp")
 
-[node name="Display" type="MeshInstance3D" parent="Model"]
+[node name="Display" type="MeshInstance3D" parent="InteractableMultimeter/Model"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0385121, 0.0203398)
 mesh = SubResource("QuadMesh_18hfp")
 
-[node name="DisplayLabel" type="Label3D" parent="Model"]
+[node name="DisplayLabel" type="Label3D" parent="InteractableMultimeter/Model"]
 transform = Transform3D(0.075, 0, 0, 0, 0.075, 0, 0, 0, 0.075, 0.0207927, 0.0381878, 0.020594)
 visible = false
 double_sided = false
@@ -61,48 +77,68 @@ text = "0.0 V"
 outline_size = 0
 horizontal_alignment = 2
 
-[node name="OnOff_PokeButton" parent="Model" instance=ExtResource("3_k4fop")]
+[node name="OnOff_PokeButton" parent="InteractableMultimeter/Model" instance=ExtResource("3_k4fop")]
 transform = Transform3D(1.25, 0, 0, 0, -5.46392e-08, -1.25, 0, 1.25, -5.46392e-08, 0, -0.00965006, 0.0223986)
 press_depth = 0.003
 animation_speed = 0.5
 
-[node name="Pressed_SignalResponder" type="Node" parent="Model/OnOff_PokeButton"]
+[node name="Pressed_SignalResponder" type="Node" parent="InteractableMultimeter/Model/OnOff_PokeButton"]
 script = ExtResource("4_lsx1p")
 signal_name = "pressed"
 metadata/_custom_type_script = "uid://qr2w4gdcybmm"
 
-[node name="DisplayOnOff_SignalAction" type="Node" parent="Model/OnOff_PokeButton/Pressed_SignalResponder" node_paths=PackedStringArray("target_node")]
+[node name="DisplayOnOff_SignalAction" type="Node" parent="InteractableMultimeter/Model/OnOff_PokeButton/Pressed_SignalResponder" node_paths=PackedStringArray("target_node")]
 script = ExtResource("5_gc3n7")
 action_type = 6
 target_node = NodePath("../../../DisplayLabel")
 metadata/_custom_type_script = "uid://cbycl5c22nqbf"
 
-[node name="GroundDetection" type="RayCast3D" parent="."]
+[node name="GroundDetection" type="RayCast3D" parent="InteractableMultimeter"]
 script = ExtResource("4_3dwhu")
 metadata/_custom_type_script = "uid://bt8ikstfac4bg"
 
-[node name="InteractionArea" type="Node3D" parent="."]
+[node name="InteractionArea" type="Node3D" parent="InteractableMultimeter"]
 
-[node name="InteractionAreaInner" type="Area3D" parent="InteractionArea"]
+[node name="InteractionAreaInner" type="Area3D" parent="InteractableMultimeter/InteractionArea"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.00415349, 0)
 script = ExtResource("3_21lvo")
 interaction_area_material = ExtResource("4_udrk1")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea/InteractionAreaInner"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractableMultimeter/InteractionArea/InteractionAreaInner"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00029899, -0.00317708, -0.00262451)
 shape = SubResource("BoxShape3D_efxa6")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="InteractionArea/InteractionAreaInner"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="InteractableMultimeter/InteractionArea/InteractionAreaInner"]
 transform = Transform3D(0.1, 0, 0, 0, 0.15, 0, 0, 0, 0.1, 0.00029899, -0.00317708, -0.00262451)
 visible = false
 mesh = SubResource("BoxMesh_efxa6")
 
-[node name="SoundPlayer" type="AudioStreamPlayer3D" parent="."]
+[node name="SoundPlayer" type="AudioStreamPlayer3D" parent="InteractableMultimeter"]
 attenuation_model = 2
 
-[node name="ShadowBlob" type="Node3D" parent="." node_paths=PackedStringArray("shadow_sprite_target")]
+[node name="ShadowBlob" type="Node3D" parent="InteractableMultimeter" node_paths=PackedStringArray("shadow_sprite_target")]
 script = ExtResource("6_1u08e")
 shadow_sprite_target = NodePath("../Model")
 shadow_texture = ExtResource("7_drqjg")
 shadow_size = Vector2(0.05, 0.05)
 metadata/_custom_type_script = "uid://cgemk3cehxxpa"
+
+[node name="LeftSnappingZone" parent="InteractableMultimeter" instance=ExtResource("13_p1bsh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0748699, 0, 0.000878915)
+object_filter_tag = "probe"
+
+[node name="CollisionShape3D" parent="InteractableMultimeter/LeftSnappingZone/TriggerArea" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.000170894, 0, -0.000201417)
+shape = SubResource("BoxShape3D_p1bsh")
+
+[node name="SnapPosition" parent="InteractableMultimeter/LeftSnappingZone" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0692526, 0)
+
+[node name="VisualMesh" parent="InteractableMultimeter/LeftSnappingZone" index="2"]
+mesh = SubResource("BoxMesh_p1bsh")
+
+[node name="InteractableMultimeterProbe" parent="." instance=ExtResource("12_d472q")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0749927, 0.0686247, 0.000871159)
+tag = "probe"
+
+[editable path="InteractableMultimeter/LeftSnappingZone"]

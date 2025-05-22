@@ -1,0 +1,65 @@
+[gd_scene load_steps=10 format=3 uid="uid://d1i6typ2ok0wq"]
+
+[ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_kugvd"]
+[ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="4_kbaeq"]
+[ext_resource type="Material" uid="uid://bprraxubu53yv" path="res://assets/materials/interaction_wireframe_area.tres" id="5_vc6vt"]
+[ext_resource type="Material" uid="uid://c6dtlgo8toq3w" path="res://assets/materials/interaction_area.tres" id="7_dfujc"]
+[ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="8_pvbmi"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kbaeq"]
+top_radius = 0.005
+bottom_radius = 0.005
+height = 0.12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_vc6vt"]
+top_radius = 0.001
+bottom_radius = 0.001
+height = 0.02
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kbaeq"]
+size = Vector3(0.035, 0.148, 0.035)
+
+[sub_resource type="BoxMesh" id="BoxMesh_efxa6"]
+material = ExtResource("7_dfujc")
+
+[node name="InteractableMultimeterProbe" type="Node3D"]
+script = ExtResource("1_kugvd")
+can_scale = false
+can_move = false
+can_rotate = false
+can_grab = true
+enable_flick = false
+enable_rotation_flick = false
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="BodyMesh" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.079617, 0)
+mesh = SubResource("CylinderMesh_kbaeq")
+
+[node name="TipMesh" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.00945869, 0)
+mesh = SubResource("CylinderMesh_vc6vt")
+
+[node name="GroundDetection" type="RayCast3D" parent="."]
+script = ExtResource("8_pvbmi")
+metadata/_custom_type_script = "uid://bt8ikstfac4bg"
+
+[node name="InteractionArea" type="Node3D" parent="."]
+
+[node name="InteractionAreaInner" type="Area3D" parent="InteractionArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0519839, 0)
+script = ExtResource("4_kbaeq")
+interaction_area_material = ExtResource("5_vc6vt")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea/InteractionAreaInner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.49081e-05, -0.0154573, -3.74885e-05)
+shape = SubResource("BoxShape3D_kbaeq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="InteractionArea/InteractionAreaInner"]
+transform = Transform3D(0.035, 0, 0, 0, 0.148, 0, 0, 0, 0.035, 0.000109969, -0.0154573, -3.74885e-05)
+visible = false
+mesh = SubResource("BoxMesh_efxa6")
+
+[node name="SoundPlayer" type="AudioStreamPlayer3D" parent="."]
+attenuation_model = 2
