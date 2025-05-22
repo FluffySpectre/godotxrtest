@@ -40,8 +40,6 @@ func _ready() -> void:
   
   # Store initial camera rotation for velocity calculation
   _last_camera_rotation = _camera.global_transform.basis
-  
-  print("FloatingViewPanel initialized")
 
 func _update_view_limits() -> void:
   # Convert margin from degrees to radians
