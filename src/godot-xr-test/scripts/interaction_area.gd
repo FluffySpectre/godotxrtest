@@ -23,22 +23,19 @@ func is_position_in_area(pos: Vector3) -> bool:
   if !_interaction_area_collision || !_interaction_area_collision.shape:
     return false
   
-  var box_shape = _interaction_area_collision.shape as BoxShape3D
-  if !box_shape:
-    return false
+  var space_state = get_world_3d().direct_space_state
+  var query = PhysicsPointQueryParameters3D.new()
+  query.position = pos
+  query.collision_mask = collision_mask
+  query.collide_with_areas = true
   
-  # Convert the position to local space
-  var local_position = to_local(pos)
+  var results = space_state.intersect_point(query)
   
-  # Get the box size (half-extents)
-  var box_size = box_shape.size / 2
+  for result in results:
+    if result.collider == self:
+      return true
   
-  # Check if the position is inside the box
-  return (
-    abs(local_position.x) <= box_size.x &&
-    abs(local_position.y) <= box_size.y &&
-    abs(local_position.z) <= box_size.z
-  )
+  return false
 
 func set_highlight(highlight: bool) -> void:
   #_interaction_area_mesh.visible = highlight

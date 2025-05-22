@@ -16,6 +16,7 @@ signal snapped_to_zone(zone: SnappingZone)
 signal unsnapped_from_zone()
 signal entered_zone(zone: SnappingZone)
 signal exited_zone(zone: SnappingZone)
+signal enabled_changed(enabled: bool)
 
 # Properties
 @export var can_scale: bool = true
@@ -27,6 +28,11 @@ signal exited_zone(zone: SnappingZone)
 @export var rotation_speed: float = 200.0
 @export var snap_to_ground: bool = false
 @export var rotation_threshold: float = 0.02  # Distance in meters before rotation starts
+
+# Enable/Disable Properties
+@export_group("Object State")
+@export var enabled: bool = true : set = set_enabled, get = get_enabled  # Whether this object can be interacted with
+@export var hide_when_disabled: bool = true  # Whether to hide the object when disabled
 
 # Object Properties
 @export_group("Object Settings")
@@ -136,9 +142,68 @@ var last_position: Vector3 = Vector3.ZERO
 var last_rotation: float = 0.0
 var last_scale: float = 1.0
 
+# Enable/Disable state variables
+var _enabled: bool = true
+
+func _notification(what: int) -> void:
+  if what == NOTIFICATION_DISABLED:
+    enabled = false
+  elif what == NOTIFICATION_ENABLED:
+    enabled = true
+
+# Enable/Disable methods
+func set_enabled(value: bool) -> void:
+  if _enabled == value:
+    return
+    
+  _enabled = value
+  
+  _apply_enabled_state()
+  
+  # End all interactions when disabled
+  if !_enabled:
+    _end_all_interactions()
+  
+  # Emit signal
+  emit_signal("enabled_changed", _enabled)
+  
+  print("InteractableObject ", name, " enabled state changed to: ", _enabled)
+
+func get_enabled() -> bool:
+  return _enabled
+
+func _apply_enabled_state() -> void:
+  if _enabled:
+    if hide_when_disabled:
+      visible = true
+  else:
+    if hide_when_disabled:
+      visible = false
+
+func _end_all_interactions() -> void:
+  # End any active interactions
+  if is_scaling:
+    _end_scaling()
+  if is_moving:
+    _end_movement()
+  if is_rotating:
+    _end_rotation()
+  if is_grabbed:
+    _end_grab()
+  
+  # Clear selection
+  if is_selected:
+    set_selected(false)
+  
+  # Cancel any ongoing animations
+  _cancel_snap_back()
+  
+  # Reset all states
+  _reset_all_modes()
+
 func set_selected(selected_: bool) -> void:
-  # Don't update if state is already correct
-  if is_selected == selected_:
+  # Don't update if state is already correct or if object is disabled
+  if is_selected == selected_ or not _enabled:
     return
       
   is_selected = selected_
@@ -175,10 +240,17 @@ func _ready() -> void:
   # Add to interactable group to make it easier to find all interactables
   add_to_group("interactable")
   
+  # Apply initial enabled state
+  _apply_enabled_state()
+  
   print("Interactable object initialized: ", name)
   print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate, ", Can grab: ", can_grab)
 
 func _process(delta: float) -> void:
+  # Don't process interactions if disabled
+  if not _enabled:
+    return
+  
   # Update hand positions
   _update_hand_positions()
   
@@ -223,6 +295,10 @@ func _process(delta: float) -> void:
     _snap_to_ground()
 
 func _physics_process(delta: float) -> void:
+  # Don't process physics if disabled
+  if not _enabled:
+    return
+    
   # Handle flick physics if active
   if flick_active && enable_flick:
     _update_flick_movement(delta)
@@ -234,9 +310,9 @@ func _physics_process(delta: float) -> void:
 func _update_hand_positions() -> void:
   # Keep track of hand positions for calculations
   if hand_tracking_manager.left_controller:
-    last_hand_positions["left"] = hand_tracking_manager.left_controller.global_transform.origin
+    last_hand_positions["left"] = hand_tracking_manager.left_controller_pointer.global_transform.origin
   if hand_tracking_manager.right_controller:
-    last_hand_positions["right"] = hand_tracking_manager.right_controller.global_transform.origin
+    last_hand_positions["right"] = hand_tracking_manager.right_controller_pointer.global_transform.origin
 
 func _update_hands_in_area() -> void:
   # Check if each hand position is inside the interaction area
@@ -289,6 +365,10 @@ func _check_rotation_threshold() -> void:
     #print("Waiting for rotation threshold: current=", horizontal_movement, ", threshold=", rotation_threshold)
 
 func _on_pinch_started(hand_name: String) -> void:
+  # Don't process interactions if disabled
+  if not _enabled:
+    return
+    
   print("Pinch started: ", hand_name)
   hands_pinching[hand_name] = true
   
@@ -935,7 +1015,7 @@ func _on_snap_to_zone_complete(zone: SnappingZone) -> void:
     is_snapped_to_zone = true
     
     # TODO
-    #reparent(current_zone)
+    reparent(current_zone)
     
     emit_signal("snapped_to_zone", zone)
 
@@ -951,6 +1031,9 @@ func unsnap_from_zone() -> void:
     # Tell the zone we're unsnapping (if it doesn't already know)
     if current_zone.snapped_object == self:
       current_zone.unsnap_object(self)
+
+    # TODO
+    reparent(get_tree().root)
     
     # Animate back to the original scale
     var target_scale = 1.0

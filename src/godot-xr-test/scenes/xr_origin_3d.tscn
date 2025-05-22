@@ -130,10 +130,12 @@ coincidewristorknuckle = false
 visiblehandtrackskeleton = false
 enableautotracker = false
 
-[node name="HandInteractionManager" type="Node3D" parent="." node_paths=PackedStringArray("left_controller", "right_controller")]
+[node name="HandInteractionManager" type="Node3D" parent="." node_paths=PackedStringArray("left_controller", "right_controller", "left_controller_pointer", "right_controller_pointer")]
 script = ExtResource("6_xllm5")
 left_controller = NodePath("../LeftXRNode3D")
 right_controller = NodePath("../RightXRNode3D")
+left_controller_pointer = NodePath("../LeftXRNode3D/vr_glove_left_model_slim_v9/Skeleton3D/PointerFingerTip/AnimatableBody3D")
+right_controller_pointer = NodePath("../RightXRNode3D/vr_glove_right_model_slim_v9/Skeleton3D/PointerFingerTip/AnimatableBody3D")
 metadata/_custom_type_script = "uid://d3u7st03gfs8h"
 
 [node name="GazeSelection" type="Node3D" parent="." node_paths=PackedStringArray("xr_camera")]

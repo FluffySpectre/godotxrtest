@@ -8,9 +8,11 @@ signal grab_ended(hand_name)
 signal hand_pose_started(hand_name)
 signal hand_pose_ended(hand_name)
 
-# References to hand controllers
+# References to hand controllers and pointers
 @export var left_controller: XRController3D
 @export var right_controller: XRController3D
+@export var left_controller_pointer: Node3D
+@export var right_controller_pointer: Node3D
 
 # Tracking states
 var left_pinching = false
