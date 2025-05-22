@@ -137,8 +137,25 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0692526, 0)
 [node name="VisualMesh" parent="InteractableMultimeter/LeftSnappingZone" index="2"]
 mesh = SubResource("BoxMesh_p1bsh")
 
-[node name="InteractableMultimeterProbe" parent="." instance=ExtResource("12_d472q")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0749927, 0.0686247, 0.000871159)
-tag = "probe"
+[node name="RightSnappingZone" parent="InteractableMultimeter" instance=ExtResource("13_p1bsh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0751453, 0, 0.000878915)
+object_filter_tag = "probe"
+
+[node name="CollisionShape3D" parent="InteractableMultimeter/RightSnappingZone/TriggerArea" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.000170894, 0, -0.000201417)
+shape = SubResource("BoxShape3D_p1bsh")
+
+[node name="SnapPosition" parent="InteractableMultimeter/RightSnappingZone" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0692526, 0)
+
+[node name="VisualMesh" parent="InteractableMultimeter/RightSnappingZone" index="2"]
+mesh = SubResource("BoxMesh_p1bsh")
+
+[node name="InteractableMultimeterProbePositive" parent="." instance=ExtResource("12_d472q")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.078, 0.069, 0)
+
+[node name="InteractableMultimeterProbeNegative" parent="." instance=ExtResource("12_d472q")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.078, 0.069, 0)
 
 [editable path="InteractableMultimeter/LeftSnappingZone"]
+[editable path="InteractableMultimeter/RightSnappingZone"]

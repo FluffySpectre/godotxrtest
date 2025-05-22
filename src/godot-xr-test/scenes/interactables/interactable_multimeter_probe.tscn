@@ -28,6 +28,8 @@ can_scale = false
 can_move = false
 can_rotate = false
 can_grab = true
+tag = "probe"
+maintain_global_rotation = true
 enable_flick = false
 enable_rotation_flick = false
 
