@@ -32,6 +32,7 @@ tag = "probe"
 maintain_global_rotation = true
 enable_flick = false
 enable_rotation_flick = false
+metadata/not_gatherable = true
 
 [node name="Model" type="Node3D" parent="."]
 

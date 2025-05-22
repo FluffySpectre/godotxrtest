@@ -50,6 +50,7 @@ signal enabled_changed(enabled: bool)
 @export var snap_to_closest_zone: bool = true  # Whether to snap to closest zone when released
 @export var snap_back_speed: float = 0.25  # Speed of snap back/zone snap animation (seconds)
 @export var snap_zone_max_distance: float = 0.5  # Maximum distance to consider for auto-snapping to zones
+@export var starting_snap_zone: Node  # Starting snapping zone
 
 # Flick Properties
 @export_group("Flick Settings")
@@ -244,8 +245,40 @@ func _ready() -> void:
   # Apply initial enabled state
   _apply_enabled_state()
   
+  # Snap to nearby snapping zone if enabled
+  if can_snap && starting_snap_zone:
+    _snap_to_starting_zone()
+
   print("Interactable object initialized: ", name)
   print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate, ", Can grab: ", can_grab)
+
+func _snap_to_starting_zone() -> void:
+  var zone: SnappingZone = starting_snap_zone
+  
+  print("Snapping to starting zone: ", zone.name)
+  
+  # Set position and rotation immediately (no animation)
+  global_position = zone.get_snap_position()
+  global_rotation = zone.get_snap_rotation()
+  
+  # Apply snap scale
+  if zone.snap_scale != Vector3.ONE:
+    scale = zone.snap_scale
+  
+  # Update our state
+  if zone.snap_object(self):
+    current_zone = zone
+    is_snapped_to_zone = true
+    
+    # Reparent to the zone
+    reparent.call_deferred(zone)
+    
+    # Store this as our snap-back target
+    snap_back_target_transform = global_transform
+    
+    emit_signal("snapped_to_zone", zone)
+  else:
+    push_warning("Failed to snap to starting zone: " + zone.name)
 
 func _process(delta: float) -> void:
   # Don't process interactions if disabled
