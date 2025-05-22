@@ -368,6 +368,10 @@ func _on_pinch_started(hand_name: String) -> void:
   # Don't process interactions if disabled
   if not _enabled:
     return
+  
+  # Check if this object should respond to this pinch event
+  if !_should_respond_to_pinch(hand_name):
+    return
     
   print("Pinch started: ", hand_name)
   hands_pinching[hand_name] = true
@@ -407,6 +411,33 @@ func _on_pinch_started(hand_name: String) -> void:
         print("Ignoring rotation as direct interactions are available")
     else:
       print("Hand is pinching but not eligible for interaction")
+
+func _should_respond_to_pinch(hand_name: String) -> bool:
+  # Always respond if hand is in this object's interaction area (direct interaction)
+  if hands_in_area.get(hand_name, false):
+    return true
+  
+  # Check if this object is selected (required for ranged interactions)
+  if !is_selected:
+    return false
+  
+  # Allow scaling if both hands are pinching and scaling is enabled
+  if can_scale && hands_pinching.get("left", false) && hands_pinching.get("right", false):
+    return true
+  
+  # Allow rotation if this hand is outside the area, no direct interactions available, and rotation is enabled
+  if can_rotate && !interaction_zone_manager.has_direct_interactions_available(hand_name):
+    return true
+  
+  # Also allow if this object is already being interacted with by this hand
+  if active_hand == hand_name:
+    return true
+  
+  # Allow if this object is already grabbed and we're checking for hand transfer
+  if is_grabbed && hands_in_area.get(hand_name, false):
+    return true
+  
+  return false
 
 func _on_pinch_ended(hand_name: String) -> void:
   print("Pinch ended: ", hand_name)
