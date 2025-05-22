@@ -198,8 +198,9 @@ func _end_all_interactions() -> void:
   # Cancel any ongoing animations
   _cancel_snap_back()
   
-  # Reset all states
   _reset_all_modes()
+  
+  _update_highlight()
 
 func set_selected(selected_: bool) -> void:
   # Don't update if state is already correct or if object is disabled
@@ -326,11 +327,32 @@ func _update_hands_in_area() -> void:
         hands_in_area[hand_name] = hand_in_area
         if hand_in_area:
           print(hand_name, " hand entered interaction area")
-          interaction_area.set_highlight(true)
         else:
           print(hand_name, " hand exited interaction area")
-          if active_hand == "" || active_hand != hand_name:  # Only turn off highlight if not currently interacting
-            interaction_area.set_highlight(false)
+        
+        _update_highlight()
+
+func _update_highlight() -> void:
+  # Don't highlight if disabled
+  if !_enabled:
+    interaction_area.set_highlight(false)
+    return
+  
+  # Check if we should show highlight
+  var should_highlight = false
+  
+  # Show highlight if any hand is in the area
+  if hands_in_area.get("left", false) || hands_in_area.get("right", false):
+    should_highlight = true
+  
+  # Also show highlight if we're actively interacting (directly)
+  if is_moving || is_grabbed:
+    should_highlight = true
+  
+  interaction_area.set_highlight(should_highlight)
+
+func _any_hand_in_area() -> bool:
+  return hands_in_area.get("left", false) || hands_in_area.get("right", false)
 
 func _update_area_transform() -> void:
   if !model:
@@ -583,6 +605,8 @@ func _end_grab() -> void:
   # Clear the interaction registration
   interaction_zone_manager.clear_interaction(previous_hand)
   
+  _update_highlight()
+  
   # Emit released signal
   emit_signal("released", previous_hand)
 
@@ -668,6 +692,8 @@ func _end_movement() -> void:
   previous_hand_position = Vector3.ZERO
   velocity_history.clear()
   
+  _update_highlight()
+  
   print("Movement ended")
   emit_signal("pinch_move_ended", previous_hand)
 
@@ -726,6 +752,8 @@ func _end_rotation() -> void:
   rotation_velocity = 0.0
   rotation_velocity_history.clear()
   
+  _update_highlight()
+  
   print("Rotation ended")
   emit_signal("rotation_ended", previous_hand)
 
@@ -773,6 +801,8 @@ func _end_scaling() -> void:
   # Clear both hand registrations since scaling uses both hands
   interaction_zone_manager.clear_interaction("left")
   interaction_zone_manager.clear_interaction("right")
+  
+  _update_highlight()
   
   print("Scaling ended")
   emit_signal("scaling_ended")
