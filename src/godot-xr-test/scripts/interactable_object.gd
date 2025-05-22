@@ -484,15 +484,9 @@ func _start_snap_back_animation() -> void:
   
   # Create a new tween for the snap back animation
   snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-  
-  # Animate position and rotation back to original transform
   snap_back_tween.tween_property(self, "global_position", snap_back_target_transform.origin, snap_back_speed)
-  
-  # Extract the rotation from the transform's basis
   var target_rotation = snap_back_target_transform.basis.get_euler()
   snap_back_tween.parallel().tween_property(self, "global_rotation", target_rotation, snap_back_speed)
-  
-  # Connect to the tween's finished signal
   snap_back_tween.finished.connect(_on_snap_back_complete)
   
   # Play snap back sound if available
@@ -904,7 +898,7 @@ func _find_closest_zone() -> SnappingZone:
 func _snap_to_zone(zone: SnappingZone) -> void:
   if !zone || is_snapped_to_zone:
     return
-    
+  
   print("Snapping to zone: ", zone.name)
   
   # Set up animation
@@ -919,6 +913,11 @@ func _snap_to_zone(zone: SnappingZone) -> void:
   var target_transform = Transform3D(Basis.from_euler(target_rotation), target_position)
   snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
   snap_back_tween.tween_method(func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress), 0.0, 1.0, snap_back_speed)
+  
+  snap_back_tween.parallel().tween_property(self, "global_position", target_position, snap_back_speed)
+  snap_back_tween.parallel().tween_property(self, "global_rotation", target_rotation, snap_back_speed)
+  snap_back_tween.parallel().tween_property(self, "scale", zone.snap_scale, snap_back_speed)
+  
   snap_back_tween.finished.connect(func(): _on_snap_to_zone_complete(zone))
   
   # Play snap sound
@@ -953,6 +952,11 @@ func unsnap_from_zone() -> void:
     if current_zone.snapped_object == self:
       current_zone.unsnap_object(self)
     
+    # Animate back to the original scale
+    var target_scale = 1.0
+    snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+    snap_back_tween.tween_property(self, "scale", Vector3(target_scale, target_scale, target_scale), snap_back_speed)
+
     # Reset state
     current_zone = null
     is_snapped_to_zone = false

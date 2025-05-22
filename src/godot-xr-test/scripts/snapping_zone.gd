@@ -13,6 +13,7 @@ signal object_unsnapped(object: InteractableObject)
 @export var snap_distance: float = 0.3  # Distance when auto-snap activates
 @export var snap_offset: Vector3 = Vector3.ZERO
 @export var snap_rotation: Vector3 = Vector3.ZERO
+@export var snap_scale: Vector3 = Vector3.ONE
 
 @export_group("Object Filtering")
 @export var object_filter_tag: String = ""  # Only snap objects with this tag
