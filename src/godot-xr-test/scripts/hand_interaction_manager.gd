@@ -130,12 +130,10 @@ func _process_grab_gesture(hand_name, grab_value) -> void:
       right_grabbing = false
     emit_signal("grab_ended", hand_name)
 
-# Get the position of a specific hand in world space
-func get_hand_position(hand_name) -> Vector3:
+func get_hand_position(hand_name: String) -> Vector3:
   var controller = left_controller if hand_name == "left" else right_controller
   return controller.global_position
 
-# Get the global transform of a specific hand
-func get_hand_transform(hand_name) -> Transform3D:
-  var controller = left_controller if hand_name == "left" else right_controller
-  return controller.global_transform
+func get_hand_pointer_position(hand_name: String) -> Vector3:
+  var pointer = left_controller_pointer if hand_name == "left" else right_controller_pointer
+  return pointer.global_position

@@ -55,8 +55,8 @@ func _check_hand_in_zone(hand_name: String) -> void:
   if !xr_camera || !hand_interaction_manager:
     return
       
-  # Get the hand position
-  var hand_position = hand_interaction_manager.get_hand_position(hand_name)
+  # Get the hand pointer position
+  var hand_position = hand_interaction_manager.get_hand_pointer_position(hand_name)
   if hand_position == Vector3.ZERO:
     # Hand position not available
     return
@@ -111,7 +111,7 @@ func _update_objects_in_direct_range() -> void:
   
   # Check which hands are inside which objects' interaction areas
   for hand_name in ["left", "right"]:
-    var hand_pos = hand_interaction_manager.get_hand_position(hand_name)
+    var hand_pos = hand_interaction_manager.get_hand_pointer_position(hand_name)
     if hand_pos == Vector3.ZERO:
       continue
       

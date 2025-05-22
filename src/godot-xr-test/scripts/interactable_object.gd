@@ -309,9 +309,9 @@ func _physics_process(delta: float) -> void:
 
 func _update_hand_positions() -> void:
   # Keep track of hand positions for calculations
-  if hand_tracking_manager.left_controller:
+  if hand_tracking_manager.left_controller_pointer:
     last_hand_positions["left"] = hand_tracking_manager.left_controller_pointer.global_transform.origin
-  if hand_tracking_manager.right_controller:
+  if hand_tracking_manager.right_controller_pointer:
     last_hand_positions["right"] = hand_tracking_manager.right_controller_pointer.global_transform.origin
 
 func _update_hands_in_area() -> void:
