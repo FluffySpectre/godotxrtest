@@ -954,7 +954,6 @@ func unsnap_from_zone() -> void:
       current_zone.unsnap_object(self)
     
     # Reset state
-    var previous_zone = current_zone
     current_zone = null
     is_snapped_to_zone = false
     
