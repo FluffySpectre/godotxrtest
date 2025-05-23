@@ -145,6 +145,9 @@ var last_scale: float = 1.0
 # Enable/Disable state variables
 var _enabled: bool = true
 
+# Direct scaling state
+var is_direct_scaling: bool = false
+
 func _notification(what: int) -> void:
   if what == NOTIFICATION_DISABLED:
     enabled = false
@@ -293,22 +296,32 @@ func _process(delta: float) -> void:
   # Match the scale and rotation of the interaction area with the models one
   _update_area_transform()
   
-  # Check for two-hand scaling (requires selection)
+  # Check for two-hand scaling
   if hands_pinching["left"] && hands_pinching["right"] && can_scale && !is_scaling:
-    # Only allow scaling if object is selected
-    if is_selected:
+    # Check if both hands are inside the interaction area (direct scaling)
+    if hands_in_area["left"] && hands_in_area["right"]:
+      # Direct scaling - both hands inside area
+      print("Both hands pinching inside area - starting direct scaling")
+      
+      # If we're in movement mode, transition to scaling
+      if is_moving:
+        _end_movement()
+      
+      _start_scaling(true)  # Pass true for direct scaling
+    elif is_selected:
+      # Ranged scaling - requires selection
       if (!is_moving && !is_rotating) || (is_rotating && !is_rotation_active) || (is_moving && !movement_started):
         # We're either not in a mode or in a pre-threshold state, so we can switch to scaling
-        print("Both hands pinching - starting scaling")
+        print("Both hands pinching - starting ranged scaling")
         
         if is_moving:
           _end_movement()
         if is_rotating:
           _end_rotation()
             
-        _start_scaling()
+        _start_scaling(false)  # Pass false for ranged scaling
     else:
-      #print("Scaling requires object to be selected first")
+      #print("Ranged scaling requires object to be selected first")
       pass
   
   # Update rotation (check if we've crossed the threshold)
@@ -438,6 +451,12 @@ func _on_pinch_started(hand_name: String) -> void:
   if is_grabbed && active_hand != hand_name:
     if hands_in_area[hand_name]:
       _transfer_to_hand(hand_name)
+    return
+  
+  # Check if we're in movement mode and the second hand pinches inside the area
+  if is_moving && active_hand != hand_name && hands_in_area[hand_name] && can_scale:
+    # Both hands are now pinching and both are inside the area - switcz to direct scaling
+    print("Second hand pinched inside area while moving - switching to direct scaling")
     return
   
   if !is_scaling && !is_moving && !is_rotating && !is_grabbed:
@@ -760,24 +779,35 @@ func _end_rotation() -> void:
   print("Rotation ended")
   emit_signal("rotation_ended", previous_hand)
 
-func _start_scaling() -> void:
+func _start_scaling(is_direct: bool = false) -> void:
   # Don't start scaling if we don't have positions for both hands
   if !last_hand_positions.has("left") || !last_hand_positions.has("right"):
     print("Cannot start scaling: missing hand positions")
     return
   
-  # Check if any direct interactions are active
-  if interaction_zone_manager.has_direct_interaction_active("left") || interaction_zone_manager.has_direct_interaction_active("right"):
-    print("Cannot start scaling: direct interaction in progress")
-    return
+  # For direct scaling, both hands should already be registered as direct interactions
+  # For ranged scaling, check if any direct interactions are active
+  if !is_direct:
+    if interaction_zone_manager.has_direct_interaction_active("left") || interaction_zone_manager.has_direct_interaction_active("right"):
+      print("Cannot start ranged scaling: direct interaction in progress")
+      return
   
   # Try to register this interaction for both hands
-  if !interaction_zone_manager.register_interaction("left", self, false) || !interaction_zone_manager.register_interaction("right", self, false):
-    return
+  if !is_direct:
+    # Ranged scaling
+    if !interaction_zone_manager.register_interaction("left", self, false) || !interaction_zone_manager.register_interaction("right", self, false):
+      return
+  else:
+    # Direct scaling - both hands should already be registered from movement mode
+    # Register the second hand if needed
+    var other_hand = "right" if active_hand == "left" else "left"
+    if !interaction_zone_manager.register_interaction(other_hand, self, true):
+      return
     
   _reset_all_modes()
   
   is_scaling = true
+  is_direct_scaling = is_direct
   
   # Get hand positions
   var left_hand_pos = last_hand_positions["left"]
@@ -792,7 +822,7 @@ func _start_scaling() -> void:
   scale_change_accumulated = 0.0
   last_scale = initial_scale
   
-  print("Scaling started with initial distance: ", initial_distance)
+  print("Scaling started (", "direct" if is_direct else "ranged", ") with initial distance: ", initial_distance)
   emit_signal("scaling_started")
 
 func _end_scaling() -> void:
@@ -800,6 +830,8 @@ func _end_scaling() -> void:
     return
       
   is_scaling = false
+  var was_direct = is_direct_scaling
+  is_direct_scaling = false
   
   # Clear both hand registrations since scaling uses both hands
   interaction_zone_manager.clear_interaction("left")
@@ -807,7 +839,7 @@ func _end_scaling() -> void:
   
   _update_highlight()
   
-  print("Scaling ended")
+  print("Scaling ended (was ", "direct" if was_direct else "ranged", ")")
   emit_signal("scaling_ended")
 
 func _reset_all_modes() -> void:
@@ -815,6 +847,7 @@ func _reset_all_modes() -> void:
   is_moving = false
   is_rotating = false
   is_scaling = false
+  is_direct_scaling = false
   movement_started = false
   is_rotation_active = false
   active_hand = ""
