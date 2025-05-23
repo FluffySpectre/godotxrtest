@@ -17,7 +17,7 @@ signal object_unsnapped(object: InteractableObject)
 
 @export_group("Object Filtering")
 @export var object_filter_tag: String = ""  # Only snap objects with this tag
-@export var exclusive: bool = false  # Only one object can be snapped at a time
+@export var single_object: bool = false  # Only one object can be snapped at a time
 
 @export_group("Visuals")
 @export var inactive_material: Material
@@ -76,7 +76,7 @@ func get_snap_rotation() -> Vector3:
 
 func can_snap_object(object: InteractableObject) -> bool:
   # Check if object is valid for snapping
-  if !object || (exclusive && snapped_object):
+  if !object || (single_object && snapped_object):
     return false
     
   # Check if object matches filter tag if one is set
@@ -89,8 +89,8 @@ func snap_object(object: InteractableObject) -> bool:
   if !enabled || !can_snap_object(object):
     return false
   
-  # If we already have an object snapped and we're exclusive, unsnap it first
-  if exclusive && snapped_object && snapped_object != object:
+  # If we already have an object snapped and only one is allowed, unsnap it first
+  if single_object && snapped_object && snapped_object != object:
     unsnap_object(snapped_object)
   
   # Set as snapped
@@ -134,26 +134,6 @@ func unsnap_object(object: InteractableObject) -> bool:
   emit_signal("object_unsnapped", object)
   
   return true
-
-func is_object_compatible(object: Node) -> bool:
-  # Check if this is an InteractableObject
-  if object is InteractableObject:
-    # Check tag if filter is set
-    var interactable = object as InteractableObject
-    if object_filter_tag && interactable.tag != object_filter_tag:
-      return false
-    return true
-  
-  # Check if this is an area that belongs to an InteractableObject
-  if object is Area3D && object.has_meta("parent_interactable"):
-    var interactable = object.get_meta("parent_interactable") as InteractableObject
-    if interactable:
-      # Check tag if filter is set
-      if object_filter_tag && interactable.tag != object_filter_tag:
-        return false
-      return true
-  
-  return false
 
 func _get_interactable_from_node(node: Node) -> InteractableObject:
   # If it's directly an InteractableObject
@@ -202,6 +182,9 @@ func _on_area_exited(area: Area3D) -> void:
 func _handle_object_entered(object: InteractableObject) -> void:
   # Add to tracked objects
   if !objects_in_zone.has(object):
+    if !can_snap_object(object):
+      return
+    
     objects_in_zone.append(object)
     
     # Notify object it entered a snapping zone
