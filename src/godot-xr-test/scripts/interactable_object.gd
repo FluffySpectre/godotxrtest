@@ -48,7 +48,7 @@ signal enabled_changed(enabled: bool)
 @export var can_snap: bool = true  # Whether this object can snap to SnappingZones
 @export var snap_back_when_released: bool = false  # Whether to return to original position when released
 @export var snap_to_closest_zone: bool = true  # Whether to snap to closest zone when released
-@export var snap_back_speed: float = 0.25  # Speed of snap back/zone snap animation (seconds)
+@export var snap_back_speed: float = 0.1  # Speed of snap back/zone snap animation (seconds)
 @export var snap_zone_max_distance: float = 0.5  # Maximum distance to consider for auto-snapping to zones
 @export var starting_snap_zone: Node  # Starting snapping zone
 
@@ -652,9 +652,11 @@ func _start_snap_back_animation() -> void:
   
   # Create a new tween for the snap back animation
   snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-  snap_back_tween.tween_property(self, "global_position", snap_back_target_transform.origin, snap_back_speed)
-  var target_rotation = snap_back_target_transform.basis.get_euler()
-  snap_back_tween.parallel().tween_property(self, "global_rotation", target_rotation, snap_back_speed)
+  var initial_transform = global_transform
+  snap_back_tween.tween_method(
+    func(progress: float): global_transform = initial_transform.interpolate_with(snap_back_target_transform, progress),
+    0.0, 1.0, snap_back_speed
+  )
   snap_back_tween.finished.connect(_on_snap_back_complete)
   
   # Play snap back sound if available
@@ -1085,13 +1087,16 @@ func _snap_to_zone(zone: SnappingZone) -> void:
   
   var initial_transform = global_transform
   var target_transform = Transform3D(Basis.from_euler(target_rotation), target_position)
+  
+  # Apply target scale to the transform
+  target_transform.basis = target_transform.basis.scaled(zone.snap_scale)
+  
+  # Animate snapping
   snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-  snap_back_tween.tween_method(func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress), 0.0, 1.0, snap_back_speed)
-  
-  snap_back_tween.parallel().tween_property(self, "global_position", target_position, snap_back_speed)
-  snap_back_tween.parallel().tween_property(self, "global_rotation", target_rotation, snap_back_speed)
-  snap_back_tween.parallel().tween_property(self, "scale", zone.snap_scale, snap_back_speed)
-  
+  snap_back_tween.tween_method(
+    func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress),
+    0.0, 1.0, snap_back_speed
+  )
   snap_back_tween.finished.connect(func(): _on_snap_to_zone_complete(zone))
   
   # Play snap sound
