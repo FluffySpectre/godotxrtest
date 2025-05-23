@@ -217,6 +217,9 @@ func set_selected(selected_: bool) -> void:
     emit_signal("selection_lost")
 
 func _ready() -> void:
+  # Save original parent
+  original_parent = get_parent()
+  
   # Connect signals from interaction zone manager
   interaction_zone_manager.pinch_started.connect(_on_pinch_started)
   interaction_zone_manager.pinch_ended.connect(_on_pinch_ended)
@@ -562,8 +565,7 @@ func _start_grab(hand_name: String, is_direct: bool = false) -> void:
   is_grabbed = true
   active_hand = hand_name
   
-  # Store original parent and transform
-  original_parent = get_parent()
+  # Store original transform
   pre_grab_transform = global_transform
   
   # Store the snap-back target transform
@@ -1113,7 +1115,6 @@ func _on_snap_to_zone_complete(zone: SnappingZone) -> void:
     current_zone = zone
     is_snapped_to_zone = true
     
-    # TODO
     reparent(current_zone)
     
     emit_signal("snapped_to_zone", zone)
@@ -1126,22 +1127,24 @@ func snap_to_zone(zone: SnappingZone) -> void:
     emit_signal("snapped_to_zone", zone)
 
 func unsnap_from_zone() -> void:
-  if is_snapped_to_zone && current_zone:
+  if is_snapped_to_zone && current_zone:    
     # Tell the zone we're unsnapping (if it doesn't already know)
     if current_zone.snapped_object == self:
       current_zone.unsnap_object(self)
-
-    # TODO
-    reparent(get_tree().root)
+    
+    # TODO: Fix me
+    # The following reparenting is needed for cases where an unsnap is 
+    # initiated without prior grabbing
+    #reparent(original_parent)
+    
+    # Reset state
+    is_snapped_to_zone = false
+    current_zone = null
     
     # Animate back to the original scale
     var target_scale = 1.0
     snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
     snap_back_tween.tween_property(self, "scale", Vector3(target_scale, target_scale, target_scale), snap_back_speed)
-
-    # Reset state
-    current_zone = null
-    is_snapped_to_zone = false
     
     # Play sound
     if sound_player && unsnap_from_zone_sound:
