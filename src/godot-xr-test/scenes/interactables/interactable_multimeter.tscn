@@ -151,13 +151,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0692526, 0)
 [node name="VisualMesh" parent="InteractableMultimeter/RightSnappingZone" index="2"]
 mesh = SubResource("BoxMesh_p1bsh")
 
-[node name="InteractableMultimeterProbePositive" parent="." node_paths=PackedStringArray("starting_snap_zone") instance=ExtResource("12_d472q")]
+[node name="InteractableMultimeterProbePositive" parent="." node_paths=PackedStringArray("home_snap_zone") instance=ExtResource("12_d472q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.078, 0.069, 0)
-starting_snap_zone = NodePath("../InteractableMultimeter/RightSnappingZone")
+snap_back_when_released = true
+home_snap_zone = NodePath("../InteractableMultimeter/RightSnappingZone")
 
-[node name="InteractableMultimeterProbeNegative" parent="." node_paths=PackedStringArray("starting_snap_zone") instance=ExtResource("12_d472q")]
+[node name="InteractableMultimeterProbeNegative" parent="." node_paths=PackedStringArray("home_snap_zone") instance=ExtResource("12_d472q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.078, 0.069, 0)
-starting_snap_zone = NodePath("../InteractableMultimeter/LeftSnappingZone")
+snap_back_when_released = true
+home_snap_zone = NodePath("../InteractableMultimeter/LeftSnappingZone")
 
 [editable path="InteractableMultimeter/LeftSnappingZone"]
 [editable path="InteractableMultimeter/RightSnappingZone"]

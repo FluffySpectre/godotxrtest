@@ -50,7 +50,7 @@ signal enabled_changed(enabled: bool)
 @export var snap_to_closest_zone: bool = true  # Whether to snap to closest zone when released
 @export var snap_back_speed: float = 0.1  # Speed of snap back/zone snap animation (seconds)
 @export var snap_zone_max_distance: float = 0.5  # Maximum distance to consider for auto-snapping to zones
-@export var starting_snap_zone: Node  # Starting snapping zone
+@export var home_snap_zone: Node  # Home snapping zone
 
 # Flick Properties
 @export_group("Flick Settings")
@@ -112,7 +112,6 @@ var original_parent: Node = null       # Store the original parent for when we'r
 
 # Grab state variables
 var pre_grab_transform: Transform3D    # Store the transform before grabbing
-var snap_back_target_transform: Transform3D  # Store the transform to snap back to
 var snap_back_tween: Tween             # Tween for snap back animation
 
 # Snapping zone state variables
@@ -249,14 +248,14 @@ func _ready() -> void:
   _apply_enabled_state()
   
   # Snap to nearby snapping zone if enabled
-  if can_snap && starting_snap_zone:
-    _snap_to_starting_zone()
+  if can_snap && home_snap_zone:
+    _snap_to_home_zone()
 
   print("Interactable object initialized: ", name)
   print("Can scale: ", can_scale, ", Can move: ", can_move, ", Can rotate: ", can_rotate, ", Can grab: ", can_grab)
 
-func _snap_to_starting_zone() -> void:
-  var zone: SnappingZone = starting_snap_zone
+func _snap_to_home_zone() -> void:
+  var zone: SnappingZone = home_snap_zone
   
   print("Snapping to starting zone: ", zone.name)
   
@@ -275,9 +274,6 @@ func _snap_to_starting_zone() -> void:
     
     # Reparent to the zone
     reparent.call_deferred(zone)
-    
-    # Store this as our snap-back target
-    snap_back_target_transform = global_transform
     
     emit_signal("snapped_to_zone", zone)
   else:
@@ -568,9 +564,6 @@ func _start_grab(hand_name: String, is_direct: bool = false) -> void:
   # Store original transform
   pre_grab_transform = global_transform
   
-  # Store the snap-back target transform
-  snap_back_target_transform = pre_grab_transform
-  
   # Get the hand attachment point
   var attachment_point = XRRig.AttachmentPoint.LEFT_HAND if hand_name == "left" else XRRig.AttachmentPoint.RIGHT_HAND
   var attachment_node = XRRig.instance.get_attachment_point_node(attachment_point)
@@ -622,10 +615,9 @@ func _end_grab() -> void:
       if closest_zone && closest_zone.global_position.distance_to(global_position) <= snap_zone_max_distance:
         _snap_to_zone(closest_zone)
       elif snap_back_when_released:
-        _start_snap_back_animation()
+        _snap_to_zone(home_snap_zone)
     elif snap_back_when_released:
-      # If no zones to snap to, snap back to original position
-      _start_snap_back_animation()
+      _snap_to_zone(home_snap_zone)
     
   # Play release sound
   if sound_player && release_sound:
@@ -645,37 +637,11 @@ func _end_grab() -> void:
   # Emit released signal
   emit_signal("released", previous_hand)
 
-func _start_snap_back_animation() -> void:
-  print("Starting snap back animation")
-  is_snapping_back = true
-  
-  # Cancel any existing tween
-  _cancel_snap_back()
-  
-  # Create a new tween for the snap back animation
-  snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-  var initial_transform = global_transform
-  snap_back_tween.tween_method(
-    func(progress: float): global_transform = initial_transform.interpolate_with(snap_back_target_transform, progress),
-    0.0, 1.0, snap_back_speed
-  )
-  snap_back_tween.finished.connect(_on_snap_back_complete)
-  
-  # Play snap back sound if available
-  if sound_player && snap_back_sound:
-    sound_player.stream = snap_back_sound
-    sound_player.play()
-
 func _cancel_snap_back() -> void:
   if snap_back_tween && snap_back_tween.is_valid():
     snap_back_tween.kill()
     snap_back_tween = null
   is_snapping_back = false
-
-func _on_snap_back_complete() -> void:
-  print("Snap back animation complete")
-  is_snapping_back = false
-  snap_back_tween = null
 
 func _start_movement(hand_name: String, is_direct: bool = false) -> void:
   _reset_all_modes()
