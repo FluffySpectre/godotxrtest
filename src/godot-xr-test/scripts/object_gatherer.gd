@@ -42,7 +42,7 @@ func gather_objects() -> void:
   var interactable_objects = []
   var interactables_in_group = get_tree().get_nodes_in_group("interactable")
   for group_object in interactables_in_group:
-    if group_object is InteractableObject && !(group_object.has_meta("not_gatherable") && group_object.get_meta("not_gatherable")):
+    if valid_interactable(group_object):
       interactable_objects.append(group_object)
   
   # If we don't have any objects, exit early
@@ -86,6 +86,11 @@ func gather_objects() -> void:
   
   # Emit signal when done
   emit_signal("gathering_complete")
+
+func valid_interactable(object: InteractableObject) -> bool:
+  return (object is InteractableObject 
+      && !(object.has_meta("not_gatherable") && object.get_meta("not_gatherable"))
+      && !object.is_snapped_to_zone)
 
 func animate_object_movement(obj: InteractableObject, target_position: Vector3) -> void:
   var tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)

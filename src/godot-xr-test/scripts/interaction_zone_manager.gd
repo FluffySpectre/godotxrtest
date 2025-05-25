@@ -20,10 +20,15 @@ signal hand_pose_ended(hand_name)
 ## Minimum distance from camera
 @export var cylinder_min_distance: float = 0.15
 
+static var instance: InteractionZoneManager
+
 var _hands_in_zone: Dictionary = {"left": false, "right": false}
 var _active_interactions: Dictionary = {"left": null, "right": null}
 var _direct_interactions: Dictionary = {"left": false, "right": false}
 var _objects_in_direct_range: Dictionary = {"left": [], "right": []}
+
+func _enter_tree() -> void:
+  instance = self
 
 func _ready() -> void:
   if hand_interaction_manager:

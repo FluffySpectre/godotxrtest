@@ -1,0 +1,42 @@
+[gd_scene load_steps=7 format=3 uid="uid://feuakhpskkjl"]
+
+[ext_resource type="Script" uid="uid://bgxltble43h6x" path="res://scripts/xr_rig_attachment.gd" id="1_i4si1"]
+[ext_resource type="PackedScene" uid="uid://coiu6lp8sjwfs" path="res://scenes/snapping_zone.tscn" id="1_ys8or"]
+[ext_resource type="Material" uid="uid://c6dtlgo8toq3w" path="res://assets/materials/interaction_area.tres" id="2_1sjoj"]
+[ext_resource type="Script" uid="uid://wbr3sbcq3xow" path="res://scripts/billboard.gd" id="2_wrd2d"]
+[ext_resource type="Script" uid="uid://c2wtveybggdku" path="res://scripts/toggle_on_hand_pose.gd" id="3_1sjoj"]
+
+[sub_resource type="TorusMesh" id="TorusMesh_wrd2d"]
+material = ExtResource("2_1sjoj")
+inner_radius = 0.08
+outer_radius = 0.1
+
+[node name="Toolbox" type="Node3D"]
+
+[node name="Contents" type="Node3D" parent="."]
+visible = false
+
+[node name="SnappingZone" parent="Contents" instance=ExtResource("1_ys8or")]
+transform = Transform3D(0.132042, 0.0403694, -0.0586097, -0.0438558, 0.143446, 0, 0.0560487, 0.0171358, 0.138076, 0.1, -0.057, 0.001)
+snap_rotation = Vector3(-0.2, 0, 0)
+snap_scale = Vector3(0.5, 0.5, 0.5)
+object_filter_tag = "tool"
+single_object = true
+
+[node name="VisualMesh" parent="Contents/SnappingZone" index="2"]
+transform = Transform3D(0.615416, -0.0193106, 0.787966, -0.773411, 0.177971, 0.608409, -0.151984, -0.983846, 0.0945909, 0, 0, 0)
+mesh = SubResource("TorusMesh_wrd2d")
+
+[node name="Billboard" type="Node" parent="Contents"]
+script = ExtResource("2_wrd2d")
+metadata/_custom_type_script = "uid://wbr3sbcq3xow"
+
+[node name="ToggleOnHandPose" type="Node" parent="Contents"]
+script = ExtResource("3_1sjoj")
+metadata/_custom_type_script = "uid://c2wtveybggdku"
+
+[node name="XRRigAttachment" type="Node" parent="."]
+script = ExtResource("1_i4si1")
+metadata/_custom_type_script = "uid://bgxltble43h6x"
+
+[editable path="Contents/SnappingZone"]

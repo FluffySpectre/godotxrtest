@@ -14,6 +14,8 @@ signal hand_pose_ended(hand_name)
 @export var left_controller_pointer: Node3D
 @export var right_controller_pointer: Node3D
 
+static var instance: HandInteractionManager
+
 # Tracking states
 var left_pinching = false
 var right_pinching = false
@@ -31,6 +33,9 @@ const GRAB_CLOSE_FOR_HAND = 0.4
 # Action paths for hand tracking
 const PINCH_PATH = "pinch"
 const GRAB_PATH = "grip"
+
+func _enter_tree() -> void:
+  instance = self
 
 func _process(_delta) -> void:
   _process_hand_gestures()

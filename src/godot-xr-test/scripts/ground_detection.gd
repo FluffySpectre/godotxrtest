@@ -9,9 +9,11 @@ var ground_position: Vector3
 
 func _ready() -> void:
   # Configure the ray
+  position.y = 0.1
   target_position = Vector3(0, -detection_distance, 0)
   enabled = true
-  collision_mask = 1
+  hit_back_faces = false
+  collision_mask = 16 # Layer 5
 
 func _physics_process(_delta: float) -> void:
   # Update ground detection
@@ -21,14 +23,3 @@ func _physics_process(_delta: float) -> void:
     ground_position = get_collision_point()
   else:
     ground_detected = false
-
-# Function to check if position is on a valid ground
-func is_valid_placement_position(pos: Vector3) -> bool:
-  # Move the ray to the position
-  global_transform.origin = pos
-    
-  # Wait for physics to update
-  await get_tree().physics_frame
-    
-  # Check if we hit something
-  return ground_detected && ground_normal.dot(Vector3.UP) > 0.7  # Ensures surface is relatively flat

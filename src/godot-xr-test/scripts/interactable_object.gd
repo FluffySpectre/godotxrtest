@@ -26,8 +26,8 @@ signal enabled_changed(enabled: bool)
 @export var min_scale: float = 0.1
 @export var max_scale: float = 2.0
 @export var rotation_speed: float = 200.0
-@export var snap_to_ground: bool = false
 @export var rotation_threshold: float = 0.02  # Distance in meters before rotation starts
+@export var keep_over_ground: bool = true
 
 # Enable/Disable Properties
 @export_group("Object State")
@@ -81,8 +81,6 @@ signal enabled_changed(enabled: bool)
 
 # References
 @onready var model = $Model
-@onready var hand_tracking_manager: HandInteractionManager = $"/root/Main/XROrigin3D/HandInteractionManager"
-@onready var interaction_zone_manager: InteractionZoneManager = $"/root/Main/XROrigin3D/InteractionZoneManager"
 @onready var ground_detection: GroundDetection = $GroundDetection
 @onready var interaction_area: InteractionArea = $InteractionArea/InteractionAreaInner
 
@@ -223,8 +221,8 @@ func _ready() -> void:
   original_parent = get_parent()
   
   # Connect signals from interaction zone manager
-  interaction_zone_manager.pinch_started.connect(_on_pinch_started)
-  interaction_zone_manager.pinch_ended.connect(_on_pinch_ended)
+  InteractionZoneManager.instance.pinch_started.connect(_on_pinch_started)
+  InteractionZoneManager.instance.pinch_ended.connect(_on_pinch_ended)
   
   # Store initial scale
   if model:
@@ -335,10 +333,6 @@ func _process(delta: float) -> void:
     _update_position()
   elif is_rotating && can_rotate && is_rotation_active:
     _update_rotation(delta)
-  
-  # Apply ground snapping when not being manipulated
-  if snap_to_ground && !is_moving && !flick_active && !is_grabbed && !is_snapping_back && !is_snapped_to_zone:
-    _snap_to_ground()
 
 func _physics_process(delta: float) -> void:
   # Don't process physics if disabled
@@ -355,10 +349,10 @@ func _physics_process(delta: float) -> void:
 
 func _update_hand_positions() -> void:
   # Keep track of hand positions for calculations
-  if hand_tracking_manager.left_controller_pointer:
-    last_hand_positions["left"] = hand_tracking_manager.left_controller_pointer.global_transform.origin
-  if hand_tracking_manager.right_controller_pointer:
-    last_hand_positions["right"] = hand_tracking_manager.right_controller_pointer.global_transform.origin
+  if HandInteractionManager.instance.left_controller_pointer:
+    last_hand_positions["left"] = HandInteractionManager.instance.left_controller_pointer.global_transform.origin
+  if HandInteractionManager.instance.right_controller_pointer:
+    last_hand_positions["right"] = HandInteractionManager.instance.right_controller_pointer.global_transform.origin
 
 func _update_hands_in_area() -> void:
   # Check if each hand position is inside the interaction area
@@ -473,7 +467,7 @@ func _on_pinch_started(hand_name: String) -> void:
       _start_grab(hand_name, true)  # Pass true to indicate direct interaction
     elif !hands_in_area[hand_name] && can_rotate:
       # Only start rotation if no direct interactions are available for this hand
-      if !interaction_zone_manager.has_direct_interactions_available(hand_name):
+      if !InteractionZoneManager.instance.has_direct_interactions_available(hand_name):
         # Pinch outside area - prepare rotation mode (requires selection)
         if is_selected:
           print("Pinch outside interaction area, preparing rotation with hand: ", hand_name)
@@ -499,7 +493,7 @@ func _should_respond_to_pinch(hand_name: String) -> bool:
     return true
   
   # Allow rotation if this hand is outside the area, no direct interactions available, and rotation is enabled
-  if can_rotate && !interaction_zone_manager.has_direct_interactions_available(hand_name):
+  if can_rotate && !InteractionZoneManager.instance.has_direct_interactions_available(hand_name):
     return true
   
   # Also allow if this object is already being interacted with by this hand
@@ -549,8 +543,8 @@ func _transfer_to_hand(new_hand_name: String) -> void:
     # Save current global transform
     var current_global_transform = global_transform
     
-    interaction_zone_manager.clear_interaction(previous_hand)
-    interaction_zone_manager.register_interaction(new_hand_name, self)
+    InteractionZoneManager.instance.clear_interaction(previous_hand)
+    InteractionZoneManager.instance.register_interaction(new_hand_name, self)
     
     active_hand = new_hand_name
     
@@ -571,7 +565,7 @@ func _start_grab(hand_name: String, is_direct: bool = false) -> void:
   if is_grabbed:
     return
   
-  if !interaction_zone_manager.register_interaction(hand_name, self, is_direct):
+  if !InteractionZoneManager.instance.register_interaction(hand_name, self, is_direct):
     return
     
   _reset_all_modes()
@@ -649,7 +643,7 @@ func _end_grab() -> void:
   active_hand = ""
   
   # Clear the interaction registration
-  interaction_zone_manager.clear_interaction(previous_hand)
+  InteractionZoneManager.instance.clear_interaction(previous_hand)
   
   _update_highlight()
   
@@ -665,7 +659,7 @@ func _cancel_snap_back() -> void:
 func _start_movement(hand_name: String, is_direct: bool = false) -> void:
   _reset_all_modes()
   
-  if !interaction_zone_manager.register_interaction(hand_name, self, is_direct):
+  if !InteractionZoneManager.instance.register_interaction(hand_name, self, is_direct):
     return
     
   is_moving = true
@@ -698,7 +692,7 @@ func _end_movement() -> void:
   active_hand = ""
   
   # Clear the interaction registration
-  interaction_zone_manager.clear_interaction(previous_hand)
+  InteractionZoneManager.instance.clear_interaction(previous_hand)
   
   # Check if we should apply flick
   if enable_flick && hand_velocity.length() > flick_speed_threshold:
@@ -720,7 +714,7 @@ func _end_movement() -> void:
   emit_signal("pinch_move_ended", previous_hand)
 
 func _prepare_rotation(hand_name: String, is_direct: bool = false) -> void:
-  if !interaction_zone_manager.register_interaction(hand_name, self, is_direct):
+  if !InteractionZoneManager.instance.register_interaction(hand_name, self, is_direct):
     return
     
   _reset_all_modes()
@@ -759,7 +753,7 @@ func _end_rotation() -> void:
   active_hand = ""
   
   # Clear the interaction registration
-  interaction_zone_manager.clear_interaction(previous_hand)
+  InteractionZoneManager.instance.clear_interaction(previous_hand)
   
   # Check if we should apply rotation flick
   if enable_rotation_flick && abs(rotation_velocity) > rotation_flick_speed_threshold:
@@ -788,20 +782,20 @@ func _start_scaling(is_direct: bool = false) -> void:
   # For direct scaling, both hands should already be registered as direct interactions
   # For ranged scaling, check if any direct interactions are active
   if !is_direct:
-    if interaction_zone_manager.has_direct_interaction_active("left") || interaction_zone_manager.has_direct_interaction_active("right"):
+    if InteractionZoneManager.instance.has_direct_interaction_active("left") || InteractionZoneManager.instance.has_direct_interaction_active("right"):
       print("Cannot start ranged scaling: direct interaction in progress")
       return
   
   # Try to register this interaction for both hands
   if !is_direct:
     # Ranged scaling
-    if !interaction_zone_manager.register_interaction("left", self, false) || !interaction_zone_manager.register_interaction("right", self, false):
+    if !InteractionZoneManager.instance.register_interaction("left", self, false) || !InteractionZoneManager.instance.register_interaction("right", self, false):
       return
   else:
     # Direct scaling - both hands should already be registered from movement mode
     # Register the second hand if needed
     var other_hand = "right" if active_hand == "left" else "left"
-    if !interaction_zone_manager.register_interaction(other_hand, self, true):
+    if !InteractionZoneManager.instance.register_interaction(other_hand, self, true):
       return
     
   _reset_all_modes()
@@ -834,8 +828,8 @@ func _end_scaling() -> void:
   is_direct_scaling = false
   
   # Clear both hand registrations since scaling uses both hands
-  interaction_zone_manager.clear_interaction("left")
-  interaction_zone_manager.clear_interaction("right")
+  InteractionZoneManager.instance.clear_interaction("left")
+  InteractionZoneManager.instance.clear_interaction("right")
   
   _update_highlight()
   
@@ -892,6 +886,15 @@ func _update_position() -> void:
   
   # Apply movement directly
   var new_position = initial_object_position + movement_vector
+  
+  # Constrain to ground level if keep over ground is enabled
+  if keep_over_ground && ground_detection && ground_detection.ground_detected:
+    var ground_position = ground_detection.ground_position
+    var ground_y = ground_position.y
+    
+    if new_position.y < ground_y:
+      new_position.y = ground_y
+  
   global_transform.origin = new_position
   
   # Check for sound trigger
@@ -909,7 +912,19 @@ func _update_position() -> void:
 
 func _update_flick_movement(delta: float) -> void:
   # Apply current flick velocity to position
-  global_transform.origin += flick_velocity * delta
+  var new_position = global_transform.origin + flick_velocity * delta
+  
+  # Constrain to ground level if keep over ground is enabled
+  if keep_over_ground && ground_detection && ground_detection.ground_detected:
+    var ground_position = ground_detection.ground_position
+    var ground_y = ground_position.y
+    
+    if new_position.y < ground_y:
+      new_position.y = ground_y
+      if flick_velocity.y < 0:
+        flick_velocity.y = 0
+  
+  global_transform.origin = new_position
   
   # Apply deceleration
   var deceleration = flick_velocity.normalized() * flick_deceleration * delta
@@ -920,10 +935,6 @@ func _update_flick_movement(delta: float) -> void:
     flick_active = false
   else:
     flick_velocity -= deceleration
-  
-  # Apply ground snapping if enabled
-  if snap_to_ground:
-    _snap_to_ground()
 
 func _update_rotation(delta: float) -> void:
   if !is_rotating || !is_rotation_active || !active_hand || !last_hand_positions.has(active_hand):
@@ -1041,16 +1052,6 @@ func _update_scale() -> void:
   
   last_scale = new_scale
 
-func _snap_to_ground() -> void:
-  if ground_detection && ground_detection.is_colliding():
-    var collision_point = ground_detection.get_collision_point()
-    var current_pos = global_transform.origin
-    global_transform.origin = Vector3(
-      current_pos.x, 
-      collision_point.y + (model.scale.y * 0.5),
-      current_pos.z
-    )
-
 func _find_closest_zone() -> SnappingZone:
   if nearby_zones.size() == 0:
     return null
@@ -1126,6 +1127,7 @@ func snap_to_zone(zone: SnappingZone) -> void:
     current_zone = zone
     
     is_snapped_to_zone = true
+    
     emit_signal("snapped_to_zone", zone)
 
 func unsnap_from_zone() -> void:

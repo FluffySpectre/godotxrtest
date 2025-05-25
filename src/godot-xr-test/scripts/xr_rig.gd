@@ -5,7 +5,7 @@ enum AttachmentPoint {LEFT_HAND, RIGHT_HAND}
 
 static var instance: XRRig
 
-func _ready() -> void:
+func _enter_tree() -> void:
   instance = self
 
 func get_attachment_point_node(attachment_point: AttachmentPoint) -> Node3D:
