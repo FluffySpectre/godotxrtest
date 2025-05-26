@@ -51,6 +51,7 @@ signal enabled_changed(enabled: bool)
 @export var snap_back_speed: float = 0.1  # Speed of snap back/zone snap animation (seconds)
 @export var snap_zone_max_distance: float = 0.5  # Maximum distance to consider for auto-snapping to zones
 @export var home_snap_zone: SnappingZone  # Home snapping zone
+@export var snap_during_flick: bool = true  # Whether to snap to zones during flick motion
 
 # Flick Properties
 @export_group("Flick Settings")
@@ -103,7 +104,6 @@ var initial_distance: float = 0.0      # Starting distance between hands for sca
 var initial_scale: float = 1.0         # Starting scale of the model
 var hands_pinching: Dictionary = {"left": false, "right": false}
 var hands_in_area: Dictionary = {"left": false, "right": false}  # Track which hands are in the interaction area
-var cumulative_movement: float = 0.0
 var last_hand_positions: Dictionary = {"left": Vector3.ZERO, "right": Vector3.ZERO}
 var is_selected: bool = false
 var original_parent: Node = null       # Store the original parent for when we're detaching
@@ -119,17 +119,16 @@ var nearby_zones: Array[SnappingZone] = []  # Zones this object is inside
 # Flick state variables
 var flick_velocity: Vector3 = Vector3.ZERO   # Current flick velocity
 var flick_active: bool = false               # Whether object is currently in flick motion
+var rotation_flick_active: bool = false      # Whether object is currently in rotation flick
+var rotation_flick_velocity: float = 0.0     # Current rotation flick velocity (radians/sec)
+
+# Velocity tracking variables
 var hand_velocity: Vector3 = Vector3.ZERO    # Tracked hand velocity
 var previous_hand_position: Vector3 = Vector3.ZERO  # Previous frame's hand position
 var velocity_history: Array = []             # Store recent velocity samples
-var velocity_sample_count: int = 5           # Number of samples to average for smoother velocity
-
-# Rotation flick state variables
-var rotation_flick_active: bool = false      # Whether object is currently in rotation flick
-var rotation_flick_velocity: float = 0.0     # Current rotation flick velocity (radians/sec)
 var rotation_velocity: float = 0.0           # Tracked rotation velocity
 var previous_rotation: float = 0.0           # Previous frame's rotation
-var rotation_velocity_history: Array = []    # Store recent rotation velocity samples
+var velocity_sample_count: int = 5           # Number of samples to average for smoother velocity
 
 # Sound tracking variables
 var sound_player: AudioStreamPlayer3D
@@ -294,6 +293,14 @@ func _process(delta: float) -> void:
   # Match the scale and rotation of the interaction area with the models one
   _update_area_transform()
   
+  # Update velocity tracking for active interaction
+  if is_grabbed:
+    _update_velocity()
+  elif is_moving:
+    _update_velocity()
+  elif is_rotating && is_rotation_active:
+    _update_rotation_velocity(delta)
+  
   # Check for two-hand scaling
   if hands_pinching["left"] && hands_pinching["right"] && can_scale && !is_scaling:
     # Check if both hands are inside the interaction area (direct scaling)
@@ -371,6 +378,53 @@ func _update_hands_in_area() -> void:
         
         _update_highlight()
 
+func _update_velocity() -> void:
+  # Track hand velocity for movement and grab modes
+  if !active_hand || !last_hand_positions.has(active_hand):
+    return
+    
+  var current_hand_position = last_hand_positions[active_hand]
+  
+  # Calculate hand velocity
+  if previous_hand_position != Vector3.ZERO:
+    var frame_velocity = (current_hand_position - previous_hand_position) / get_physics_process_delta_time()
+    
+    # Add to velocity history for smoothing
+    velocity_history.push_back(frame_velocity)
+    if velocity_history.size() > velocity_sample_count:
+      velocity_history.pop_front()
+      
+    # Calculate average velocity
+    hand_velocity = Vector3.ZERO
+    for vel in velocity_history:
+      hand_velocity += vel
+    hand_velocity /= velocity_history.size()
+  
+  # Store for next frame
+  previous_hand_position = current_hand_position
+
+func _update_rotation_velocity(delta: float) -> void:
+  # Track rotation velocity for rotation flick
+  if !model:
+    return
+    
+  var current_rotation = model.rotation.y
+  var frame_rotation_velocity = (current_rotation - previous_rotation) / delta
+  
+  # Add to velocity history for smoothing
+  velocity_history.push_back(frame_rotation_velocity)
+  if velocity_history.size() > velocity_sample_count:
+    velocity_history.pop_front()
+    
+  # Calculate average rotation velocity
+  rotation_velocity = 0.0
+  for vel in velocity_history:
+    rotation_velocity += vel
+  rotation_velocity /= velocity_history.size()
+  
+  # Store for next frame
+  previous_rotation = current_rotation
+
 func _update_highlight() -> void:
   # Don't highlight if disabled
   if !_enabled:
@@ -416,9 +470,8 @@ func _check_rotation_threshold() -> void:
     initial_hand_x = initial_pinch_position.x
     last_hand_x = initial_hand_x
     
-    # Reset rotation velocity tracking
-    rotation_velocity = 0.0
-    rotation_velocity_history.clear()
+    # Reset velocity tracking
+    _reset_velocity_tracking()
     
     emit_signal("rotation_started", active_hand)
   else:
@@ -548,6 +601,9 @@ func _transfer_to_hand(new_hand_name: String) -> void:
     
     active_hand = new_hand_name
     
+    # Reset velocity tracking for the new hand
+    _reset_velocity_tracking()
+    
     reparent(attachment_node)
     
     # Apply offset if needed
@@ -576,6 +632,9 @@ func _start_grab(hand_name: String, is_direct: bool = false) -> void:
   
   # Store original transform
   pre_grab_transform = global_transform
+  
+  # Initialize velocity tracking
+  _reset_velocity_tracking()
   
   # Get the hand attachment point
   var attachment_point = XRRig.AttachmentPoint.LEFT_HAND if hand_name == "left" else XRRig.AttachmentPoint.RIGHT_HAND
@@ -622,15 +681,25 @@ func _end_grab() -> void:
     # Restore global transform to maintain position and rotation in world space
     global_transform = current_global_transform
     
-    # Check if we should snap to a nearby zone
-    if can_snap && snap_to_closest_zone && nearby_zones.size() > 0:
-      var closest_zone = _find_closest_zone()
-      if closest_zone && closest_zone.global_position.distance_to(global_position) <= snap_zone_max_distance:
-        _snap_to_zone(closest_zone)
+    # Check if we should apply flick from grab
+    if enable_flick && hand_velocity.length() > flick_speed_threshold:
+      flick_velocity = hand_velocity * flick_force_multiplier
+      flick_active = true
+      print("Grab flick activated with velocity: ", flick_velocity)
+    else:
+      flick_velocity = Vector3.ZERO
+      flick_active = false
+      
+      # Only check for snapping if we're not flicking
+      # Check if we should snap to a nearby zone
+      if can_snap && snap_to_closest_zone && nearby_zones.size() > 0:
+        var closest_zone = _find_closest_zone()
+        if closest_zone && closest_zone.global_position.distance_to(global_position) <= snap_zone_max_distance:
+          _snap_to_zone(closest_zone)
+        elif snap_back_when_released:
+          _snap_to_zone(home_snap_zone)
       elif snap_back_when_released:
         _snap_to_zone(home_snap_zone)
-    elif snap_back_when_released:
-      _snap_to_zone(home_snap_zone)
     
   # Play release sound
   if sound_player && release_sound:
@@ -641,6 +710,9 @@ func _end_grab() -> void:
   var previous_hand = active_hand
   is_grabbed = false
   active_hand = ""
+  
+  # Reset velocity tracking
+  _reset_velocity_tracking()
   
   # Clear the interaction registration
   InteractionZoneManager.instance.clear_interaction(previous_hand)
@@ -669,11 +741,9 @@ func _start_movement(hand_name: String, is_direct: bool = false) -> void:
   # Store initial positions
   initial_pinch_position = last_hand_positions[hand_name]
   initial_object_position = global_transform.origin
-  previous_hand_position = Vector3.ZERO
   
-  # Reset tracking
-  velocity_history.clear()
-  hand_velocity = Vector3.ZERO
+  # Reset velocity tracking
+  _reset_velocity_tracking()
   
   # Reset sound tracking
   move_distance_accumulated = 0.0
@@ -704,9 +774,7 @@ func _end_movement() -> void:
     flick_active = false
   
   # Reset velocity tracking
-  hand_velocity = Vector3.ZERO
-  previous_hand_position = Vector3.ZERO
-  velocity_history.clear()
+  _reset_velocity_tracking()
   
   _update_highlight()
   
@@ -729,9 +797,8 @@ func _prepare_rotation(hand_name: String, is_direct: bool = false) -> void:
   last_hand_x = initial_hand_x
   initial_object_rotation = model.rotation.y
   
-  # Reset rotation velocity tracking
-  rotation_velocity = 0.0
-  rotation_velocity_history.clear()
+  # Reset velocity tracking
+  _reset_velocity_tracking()
   
   # Reset sound tracking
   rotation_accumulated = 0.0
@@ -764,9 +831,8 @@ func _end_rotation() -> void:
     rotation_flick_velocity = 0.0
     rotation_flick_active = false
   
-  # Reset rotation velocity tracking
-  rotation_velocity = 0.0
-  rotation_velocity_history.clear()
+  # Reset velocity tracking
+  _reset_velocity_tracking()
   
   _update_highlight()
   
@@ -836,6 +902,14 @@ func _end_scaling() -> void:
   print("Scaling ended (was ", "direct" if was_direct else "ranged", ")")
   emit_signal("scaling_ended")
 
+func _reset_velocity_tracking() -> void:
+  # Reset unified velocity tracking variables
+  hand_velocity = Vector3.ZERO
+  previous_hand_position = Vector3.ZERO
+  velocity_history.clear()
+  rotation_velocity = 0.0
+  previous_rotation = 0.0
+
 func _reset_all_modes() -> void:
   # Reset all interaction states
   is_moving = false
@@ -853,6 +927,9 @@ func _reset_all_modes() -> void:
   # Cancel any snap back animation
   _cancel_snap_back()
   
+  # Reset velocity tracking
+  _reset_velocity_tracking()
+  
   # Reset sound tracking variables
   move_distance_accumulated = 0.0
   rotation_accumulated = 0.0
@@ -863,25 +940,6 @@ func _update_position() -> void:
     return
       
   var current_hand_position = last_hand_positions[active_hand]
-  
-  # Calculate hand velocity
-  if previous_hand_position != Vector3.ZERO:
-    var frame_velocity = (current_hand_position - previous_hand_position) / get_physics_process_delta_time()
-    
-    # Add to velocity history for smoothing
-    velocity_history.push_back(frame_velocity)
-    if velocity_history.size() > velocity_sample_count:
-      velocity_history.pop_front()
-      
-    # Calculate average velocity
-    hand_velocity = Vector3.ZERO
-    for vel in velocity_history:
-      hand_velocity += vel
-    hand_velocity /= velocity_history.size()
-  
-  # Store for next frame
-  previous_hand_position = current_hand_position
-  
   var movement_vector = current_hand_position - initial_pinch_position
   
   # Apply movement directly
@@ -926,6 +984,17 @@ func _update_flick_movement(delta: float) -> void:
   
   global_transform.origin = new_position
   
+  # Check for zone snapping during flick motion
+  if snap_during_flick && can_snap && nearby_zones.size() > 0:
+    var closest_zone = _find_closest_zone()
+    if closest_zone && closest_zone.global_position.distance_to(global_position) <= snap_zone_max_distance:
+      print("Snapping to zone during flick motion: ", closest_zone.name)
+      # Stop flick and snap to zone
+      flick_active = false
+      flick_velocity = Vector3.ZERO
+      _snap_to_zone(closest_zone)
+      return
+  
   # Apply deceleration
   var deceleration = flick_velocity.normalized() * flick_deceleration * delta
   
@@ -933,6 +1002,16 @@ func _update_flick_movement(delta: float) -> void:
   if deceleration.length() > flick_velocity.length():
     flick_velocity = Vector3.ZERO
     flick_active = false
+    
+    # Check for snapping after flick stops (if not already snapped during motion)
+    if can_snap && snap_to_closest_zone && nearby_zones.size() > 0:
+      var closest_zone = _find_closest_zone()
+      if closest_zone && closest_zone.global_position.distance_to(global_position) <= snap_zone_max_distance:
+        _snap_to_zone(closest_zone)
+      elif snap_back_when_released:
+        _snap_to_zone(home_snap_zone)
+    elif snap_back_when_released:
+      _snap_to_zone(home_snap_zone)
   else:
     flick_velocity -= deceleration
 
@@ -959,23 +1038,6 @@ func _update_rotation(delta: float) -> void:
     var rotation_amount = angle * rotation_speed * delta
     var new_rotation = initial_object_rotation + rotation_amount
     model.rotation.y = new_rotation
-    
-    # Calculate rotation velocity for flick
-    var frame_rotation_velocity = (new_rotation - previous_rotation) / delta
-    
-    # Add to velocity history for smoothing
-    rotation_velocity_history.push_back(frame_rotation_velocity)
-    if rotation_velocity_history.size() > velocity_sample_count:
-      rotation_velocity_history.pop_front()
-      
-    # Calculate average rotation velocity
-    rotation_velocity = 0.0
-    for vel in rotation_velocity_history:
-      rotation_velocity += vel
-    rotation_velocity /= rotation_velocity_history.size()
-    
-    # Store for next frame
-    previous_rotation = new_rotation
     
     # Check for sound trigger
     if last_rotation != 0.0:
@@ -1081,7 +1143,7 @@ func _snap_to_zone(zone: SnappingZone) -> void:
   
   # Set up animation
   _cancel_snap_back()  # Cancel any existing animations
-  is_snapping_back = true  # Reuse the same flag
+  is_snapping_back = true
   
   # Play snap sound
   if sound_player && snap_to_zone_sound:
