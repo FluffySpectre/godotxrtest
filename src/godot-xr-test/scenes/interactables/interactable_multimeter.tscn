@@ -1,13 +1,12 @@
-[gd_scene load_steps=22 format=3 uid="uid://cxi5gkvlpppqf"]
+[gd_scene load_steps=21 format=3 uid="uid://cxi5gkvlpppqf"]
 
 [ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_8jmwx"]
+[ext_resource type="Script" uid="uid://krcj11ih8pv0" path="res://scripts/voltage_measurement/multimeter_controller.gd" id="1_d472q"]
 [ext_resource type="AudioStream" uid="uid://xoeciiuu7ype" path="res://assets/sfx/click.wav" id="2_udrk1"]
 [ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="3_21lvo"]
 [ext_resource type="PackedScene" uid="uid://bkgjtu8qugixo" path="res://scenes/poke_button.tscn" id="3_k4fop"]
 [ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="4_3dwhu"]
-[ext_resource type="Script" uid="uid://qr2w4gdcybmm" path="res://scripts/signal_responder.gd" id="4_lsx1p"]
 [ext_resource type="Material" uid="uid://bprraxubu53yv" path="res://assets/materials/interaction_wireframe_area.tres" id="4_udrk1"]
-[ext_resource type="Script" uid="uid://cbycl5c22nqbf" path="res://scripts/signal_action.gd" id="5_gc3n7"]
 [ext_resource type="Material" uid="uid://c6dtlgo8toq3w" path="res://assets/materials/interaction_area.tres" id="5_k4fop"]
 [ext_resource type="Script" uid="uid://cgemk3cehxxpa" path="res://scripts/shadow_blob.gd" id="6_1u08e"]
 [ext_resource type="Texture2D" uid="uid://dexgmdgoluu3a" path="res://assets/textures/shadow_blob_rectangular.png" id="7_drqjg"]
@@ -47,6 +46,7 @@ material = SubResource("StandardMaterial3D_pws2o")
 size = Vector3(0.0279785, 0.15, 0.0289429)
 
 [node name="InteractableMultimeter" type="Node3D"]
+script = ExtResource("1_d472q")
 
 [node name="InteractableMultimeter" type="Node3D" parent="."]
 script = ExtResource("1_8jmwx")
@@ -83,17 +83,6 @@ horizontal_alignment = 2
 transform = Transform3D(1.25, 0, 0, 0, -5.46392e-08, -1.25, 0, 1.25, -5.46392e-08, 0, -0.00965006, 0.0223986)
 press_depth = 0.003
 animation_speed = 0.5
-
-[node name="Pressed_SignalResponder" type="Node" parent="InteractableMultimeter/Model/OnOff_PokeButton"]
-script = ExtResource("4_lsx1p")
-signal_name = "pressed"
-metadata/_custom_type_script = "uid://qr2w4gdcybmm"
-
-[node name="DisplayOnOff_SignalAction" type="Node" parent="InteractableMultimeter/Model/OnOff_PokeButton/Pressed_SignalResponder" node_paths=PackedStringArray("target_node")]
-script = ExtResource("5_gc3n7")
-action_type = 6
-target_node = NodePath("../../../DisplayLabel")
-metadata/_custom_type_script = "uid://cbycl5c22nqbf"
 
 [node name="GroundDetection" type="RayCast3D" parent="InteractableMultimeter"]
 script = ExtResource("4_3dwhu")
