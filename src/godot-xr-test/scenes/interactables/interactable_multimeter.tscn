@@ -1,8 +1,7 @@
-[gd_scene load_steps=21 format=3 uid="uid://cxi5gkvlpppqf"]
+[gd_scene load_steps=25 format=3 uid="uid://cxi5gkvlpppqf"]
 
 [ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_8jmwx"]
 [ext_resource type="Script" uid="uid://krcj11ih8pv0" path="res://scripts/voltage_measurement/multimeter_controller.gd" id="1_d472q"]
-[ext_resource type="AudioStream" uid="uid://xoeciiuu7ype" path="res://assets/sfx/click.wav" id="2_udrk1"]
 [ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="3_21lvo"]
 [ext_resource type="PackedScene" uid="uid://bkgjtu8qugixo" path="res://scenes/poke_button.tscn" id="3_k4fop"]
 [ext_resource type="Script" uid="uid://bt8ikstfac4bg" path="res://scripts/ground_detection.gd" id="4_3dwhu"]
@@ -11,6 +10,7 @@
 [ext_resource type="Script" uid="uid://cgemk3cehxxpa" path="res://scripts/shadow_blob.gd" id="6_1u08e"]
 [ext_resource type="Texture2D" uid="uid://dexgmdgoluu3a" path="res://assets/textures/shadow_blob_rectangular.png" id="7_drqjg"]
 [ext_resource type="PackedScene" uid="uid://d1i6typ2ok0wq" path="res://scenes/interactables/interactable_multimeter_probe.tscn" id="12_d472q"]
+[ext_resource type="Script" uid="uid://ns5wpttu8hpj" path="res://scripts/cable.gd" id="13_dmpup"]
 [ext_resource type="PackedScene" uid="uid://coiu6lp8sjwfs" path="res://scenes/snapping_zone.tscn" id="13_p1bsh"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_cescp"]
@@ -45,6 +45,28 @@ albedo_color = Color(0, 0.584314, 0.894118, 0.407843)
 material = SubResource("StandardMaterial3D_pws2o")
 size = Vector3(0.0279785, 0.15, 0.0289429)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p1bsh"]
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(0.740038, 0, 0.116075, 1)
+point_size = 46.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dmpup"]
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(0, 0, 0, 1)
+point_size = 46.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d472q"]
+albedo_color = Color(0.816172, 0.18885, 0.106803, 1)
+metallic = 0.3
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qt4fy"]
+albedo_color = Color(0.051971, 0.051971, 0.051971, 1)
+metallic = 0.3
+roughness = 0.7
+
 [node name="InteractableMultimeter" type="Node3D"]
 script = ExtResource("1_d472q")
 
@@ -59,8 +81,6 @@ maintain_global_rotation = true
 flick_force_multiplier = 0.65
 flick_deceleration = 7.0
 enable_rotation_flick = false
-grab_sound = ExtResource("2_udrk1")
-release_sound = ExtResource("2_udrk1")
 
 [node name="Model" type="Node3D" parent="InteractableMultimeter"]
 
@@ -83,6 +103,12 @@ horizontal_alignment = 2
 transform = Transform3D(1.25, 0, 0, 0, -5.46392e-08, -1.25, 0, 1.25, -5.46392e-08, 0, -0.00965006, 0.0223986)
 press_depth = 0.003
 animation_speed = 0.5
+
+[node name="CablePortPositive" type="Node3D" parent="InteractableMultimeter/Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0135585, -0.0450672, 0)
+
+[node name="CablePortNegative" type="Node3D" parent="InteractableMultimeter/Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0129511, -0.0450672, 0)
 
 [node name="GroundDetection" type="RayCast3D" parent="InteractableMultimeter"]
 script = ExtResource("4_3dwhu")
@@ -126,6 +152,7 @@ shape = SubResource("BoxShape3D_p1bsh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0692526, 0)
 
 [node name="VisualMesh" parent="InteractableMultimeter/LeftSnappingZone" index="2"]
+visible = false
 mesh = SubResource("BoxMesh_p1bsh")
 
 [node name="RightSnappingZone" parent="InteractableMultimeter" instance=ExtResource("13_p1bsh")]
@@ -140,17 +167,40 @@ shape = SubResource("BoxShape3D_p1bsh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0692526, 0)
 
 [node name="VisualMesh" parent="InteractableMultimeter/RightSnappingZone" index="2"]
+visible = false
 mesh = SubResource("BoxMesh_p1bsh")
+
+[node name="CablePositive" type="Node3D" parent="InteractableMultimeter" node_paths=PackedStringArray("start_node", "end_node")]
+script = ExtResource("13_dmpup")
+start_node = NodePath("../Model/CablePortPositive")
+end_node = NodePath("../../InteractableMultimeterProbePositive/Model/CablePort")
+cable_material = SubResource("StandardMaterial3D_p1bsh")
+metadata/_custom_type_script = "uid://ns5wpttu8hpj"
+
+[node name="CableNegative" type="Node3D" parent="InteractableMultimeter" node_paths=PackedStringArray("start_node", "end_node")]
+script = ExtResource("13_dmpup")
+start_node = NodePath("../Model/CablePortNegative")
+end_node = NodePath("../../InteractableMultimeterProbeNegative/Model/CablePort")
+cable_material = SubResource("StandardMaterial3D_dmpup")
+metadata/_custom_type_script = "uid://ns5wpttu8hpj"
 
 [node name="InteractableMultimeterProbePositive" parent="." node_paths=PackedStringArray("home_snap_zone") instance=ExtResource("12_d472q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.078, 0.069, 0)
 snap_back_when_released = true
 home_snap_zone = NodePath("../InteractableMultimeter/RightSnappingZone")
 
+[node name="BodyMesh" parent="InteractableMultimeterProbePositive/Model" index="0"]
+material_override = SubResource("StandardMaterial3D_d472q")
+
 [node name="InteractableMultimeterProbeNegative" parent="." node_paths=PackedStringArray("home_snap_zone") instance=ExtResource("12_d472q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.078, 0.069, 0)
 snap_back_when_released = true
 home_snap_zone = NodePath("../InteractableMultimeter/LeftSnappingZone")
 
+[node name="BodyMesh" parent="InteractableMultimeterProbeNegative/Model" index="0"]
+material_override = SubResource("StandardMaterial3D_qt4fy")
+
 [editable path="InteractableMultimeter/LeftSnappingZone"]
 [editable path="InteractableMultimeter/RightSnappingZone"]
+[editable path="InteractableMultimeterProbePositive"]
+[editable path="InteractableMultimeterProbeNegative"]
