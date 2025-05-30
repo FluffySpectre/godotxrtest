@@ -204,7 +204,7 @@ func _end_all_interactions() -> void:
 
 func set_selected(selected_: bool) -> void:
   # Don't update if state is already correct or if object is disabled
-  if is_selected == selected_ or not _enabled:
+  if is_selected == selected_ || !_enabled:
     return
       
   is_selected = selected_
@@ -281,7 +281,7 @@ func _snap_to_home_zone() -> void:
 
 func _process(delta: float) -> void:
   # Don't process interactions if disabled
-  if not _enabled:
+  if !_enabled:
     return
   
   # Update hand positions
@@ -343,7 +343,7 @@ func _process(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
   # Don't process physics if disabled
-  if not _enabled:
+  if !_enabled:
     return
     
   # Handle flick physics if active
@@ -480,7 +480,7 @@ func _check_rotation_threshold() -> void:
 
 func _on_pinch_started(hand_name: String) -> void:
   # Don't process interactions if disabled
-  if not _enabled:
+  if !_enabled:
     return
   
   # Check if this object should respond to this pinch event
@@ -736,7 +736,7 @@ func _start_movement(hand_name: String, is_direct: bool = false) -> void:
     
   is_moving = true
   active_hand = hand_name
-  movement_started = true  # For simplicity, we're starting movement immediately
+  movement_started = true
   
   # Store initial positions
   initial_pinch_position = last_hand_positions[hand_name]

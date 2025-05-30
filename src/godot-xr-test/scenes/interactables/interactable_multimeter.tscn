@@ -186,6 +186,7 @@ metadata/_custom_type_script = "uid://ns5wpttu8hpj"
 
 [node name="InteractableMultimeterProbePositive" parent="." node_paths=PackedStringArray("home_snap_zone") instance=ExtResource("12_d472q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.078, 0.069, 0)
+hide_when_disabled = false
 snap_back_when_released = true
 home_snap_zone = NodePath("../InteractableMultimeter/RightSnappingZone")
 
@@ -194,6 +195,7 @@ material_override = SubResource("StandardMaterial3D_d472q")
 
 [node name="InteractableMultimeterProbeNegative" parent="." node_paths=PackedStringArray("home_snap_zone") instance=ExtResource("12_d472q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.078, 0.069, 0)
+hide_when_disabled = false
 snap_back_when_released = true
 home_snap_zone = NodePath("../InteractableMultimeter/LeftSnappingZone")
 

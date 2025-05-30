@@ -34,74 +34,49 @@ func update_line() -> void:
   var start_pos = to_local(start_node.global_position)
   var end_pos = to_local(end_node.global_position)
   
-  # Calculate direction and perpendicular vectors
-  var direction = (end_pos - start_pos).normalized()
-  var up = Vector3.UP
-  if abs(direction.dot(up)) > 0.9:
-    up = Vector3.RIGHT
-  var right = direction.cross(up).normalized() * cable_thickness
-  var forward = right.cross(direction).normalized() * cable_thickness
+  var camera = get_viewport().get_camera_3d()
+  if !camera:
+    return
+    
+  var camera_pos = to_local(camera.global_position)
   
-  # Create vertices for a rectangular tube
+  # Calculate cable direction and center
+  var cable_direction = (end_pos - start_pos)
+  var cable_center = (start_pos + end_pos) * 0.5
+  var cable_length = cable_direction.length()
+  
+  if cable_length == 0:
+    return
+    
+  cable_direction = cable_direction.normalized()
+  
+  # Calculate right vector for billboarding
+  var to_camera = (camera_pos - cable_center).normalized()
+  var right = cable_direction.cross(to_camera).normalized() * cable_thickness
+  
   var vertices = PackedVector3Array()
   var normals = PackedVector3Array()
   var uvs = PackedVector2Array()
   var indices = PackedInt32Array()
   
-  # Create 8 vertices (4 at start, 4 at end)
-  var vertex_positions = [
-    start_pos + right + forward,   # 0
-    start_pos + right - forward,   # 1
-    start_pos - right - forward,   # 2
-    start_pos - right + forward,   # 3
-    end_pos + right + forward,     # 4
-    end_pos + right - forward,     # 5
-    end_pos - right - forward,     # 6
-    end_pos - right + forward      # 7
-  ]
+  # Quad vertices
+  vertices.append(start_pos - right)  # 0
+  vertices.append(start_pos + right)  # 1
+  vertices.append(end_pos + right)    # 2
+  vertices.append(end_pos - right)    # 3
   
-  # Define face normals for each side
-  var face_normals = [
-    right.normalized(),           # Right side
-    -forward.normalized(),        # Back side  
-    -right.normalized(),          # Left side
-    forward.normalized(),         # Front side
-    -direction.normalized(),      # Start cap
-    direction.normalized()        # End cap
-  ]
+  # All normals point toward camera
+  for i in range(4):
+    normals.append(to_camera)
   
-  # Create faces
-  var faces = [
-    [0,1,5,4], [1,2,6,5], [2,3,7,6], [3,0,4,7], # sides
-    [3,2,1,0], [4,5,6,7] # caps
-  ]
+  # UV coordinates
+  uvs.append(Vector2(0, 0))
+  uvs.append(Vector2(1, 0))
+  uvs.append(Vector2(1, 1))
+  uvs.append(Vector2(0, 1))
   
-  var vertex_index = 0
-  
-  for face_idx in range(faces.size()):
-    var face = faces[face_idx]
-    var normal = face_normals[face_idx]
-    
-    # Add vertices for this face
-    var face_start_idx = vertex_index
-    
-    for i in range(4):
-      vertices.append(vertex_positions[face[i]])
-      normals.append(normal)
-      # Create UV coordinates
-      uvs.append(Vector2(float(i % 2), float(i / 2)))
-    
-    # First triangle
-    indices.append(face_start_idx + 0)
-    indices.append(face_start_idx + 1)
-    indices.append(face_start_idx + 2)
-    
-    # Second triangle
-    indices.append(face_start_idx + 0)
-    indices.append(face_start_idx + 2)
-    indices.append(face_start_idx + 3)
-    
-    vertex_index += 4
+  # Two triangles for the quad
+  indices.append_array([0, 1, 2, 0, 2, 3])
   
   var arrays = []
   arrays.resize(Mesh.ARRAY_MAX)
@@ -119,6 +94,6 @@ func _process(_delta: float) -> void:
     var current_end_pos = end_node.global_position
     
     if current_start_pos != _last_start_pos || current_end_pos != _last_end_pos:
-      update_line()
+      update_line.call_deferred() # Update at the end of the frame, to ensure the position updates from our parent are done
       _last_start_pos = current_start_pos
       _last_end_pos = current_end_pos
