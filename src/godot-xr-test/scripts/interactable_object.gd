@@ -141,15 +141,17 @@ var last_scale: float = 1.0
 
 # Enable/Disable state variables
 var _enabled: bool = true
+var _enabled_before_notification: bool
 
 # Direct scaling state
 var is_direct_scaling: bool = false
 
 func _notification(what: int) -> void:
   if what == NOTIFICATION_DISABLED:
+    _enabled_before_notification = _enabled
     enabled = false
   elif what == NOTIFICATION_ENABLED:
-    enabled = true
+    enabled = _enabled_before_notification
 
 # Enable/Disable methods
 func set_enabled(value: bool) -> void:
