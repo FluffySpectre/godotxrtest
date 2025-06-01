@@ -45,6 +45,16 @@ albedo_color = Color(0, 0.584314, 0.894118, 0.407843)
 material = SubResource("StandardMaterial3D_pws2o")
 size = Vector3(0.0279785, 0.15, 0.0289429)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d472q"]
+albedo_color = Color(0.816172, 0.18885, 0.106803, 1)
+metallic = 0.3
+roughness = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qt4fy"]
+albedo_color = Color(0.051971, 0.051971, 0.051971, 1)
+metallic = 0.3
+roughness = 0.7
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p1bsh"]
 cull_mode = 2
 shading_mode = 0
@@ -56,16 +66,6 @@ cull_mode = 2
 shading_mode = 0
 albedo_color = Color(0, 0, 0, 1)
 point_size = 46.9
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d472q"]
-albedo_color = Color(0.816172, 0.18885, 0.106803, 1)
-metallic = 0.3
-roughness = 0.7
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qt4fy"]
-albedo_color = Color(0.051971, 0.051971, 0.051971, 1)
-metallic = 0.3
-roughness = 0.7
 
 [node name="InteractableMultimeter" type="Node3D"]
 script = ExtResource("1_d472q")
@@ -170,23 +170,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0692526, 0)
 visible = false
 mesh = SubResource("BoxMesh_p1bsh")
 
-[node name="CablePositive" type="Node3D" parent="InteractableMultimeter" node_paths=PackedStringArray("start_node", "end_node")]
-script = ExtResource("13_dmpup")
-start_node = NodePath("../Model/CablePortPositive")
-end_node = NodePath("../../InteractableMultimeterProbePositive/Model/CablePort")
-cable_material = SubResource("StandardMaterial3D_p1bsh")
-metadata/_custom_type_script = "uid://ns5wpttu8hpj"
-
-[node name="CableNegative" type="Node3D" parent="InteractableMultimeter" node_paths=PackedStringArray("start_node", "end_node")]
-script = ExtResource("13_dmpup")
-start_node = NodePath("../Model/CablePortNegative")
-end_node = NodePath("../../InteractableMultimeterProbeNegative/Model/CablePort")
-cable_material = SubResource("StandardMaterial3D_dmpup")
-metadata/_custom_type_script = "uid://ns5wpttu8hpj"
-
 [node name="InteractableMultimeterProbePositive" parent="." node_paths=PackedStringArray("home_snap_zone") instance=ExtResource("12_d472q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.078, 0.069, 0)
-hide_when_disabled = false
 snap_back_when_released = true
 home_snap_zone = NodePath("../InteractableMultimeter/RightSnappingZone")
 
@@ -195,12 +180,25 @@ material_override = SubResource("StandardMaterial3D_d472q")
 
 [node name="InteractableMultimeterProbeNegative" parent="." node_paths=PackedStringArray("home_snap_zone") instance=ExtResource("12_d472q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.078, 0.069, 0)
-hide_when_disabled = false
 snap_back_when_released = true
 home_snap_zone = NodePath("../InteractableMultimeter/LeftSnappingZone")
 
 [node name="BodyMesh" parent="InteractableMultimeterProbeNegative/Model" index="0"]
 material_override = SubResource("StandardMaterial3D_qt4fy")
+
+[node name="CablePositive" type="Node3D" parent="." node_paths=PackedStringArray("start_node", "end_node")]
+script = ExtResource("13_dmpup")
+start_node = NodePath("../InteractableMultimeter/Model/CablePortPositive")
+end_node = NodePath("../InteractableMultimeterProbePositive/Model/CablePort")
+cable_material = SubResource("StandardMaterial3D_p1bsh")
+metadata/_custom_type_script = "uid://ns5wpttu8hpj"
+
+[node name="CableNegative" type="Node3D" parent="." node_paths=PackedStringArray("start_node", "end_node")]
+script = ExtResource("13_dmpup")
+start_node = NodePath("../InteractableMultimeter/Model/CablePortNegative")
+end_node = NodePath("../InteractableMultimeterProbeNegative/Model/CablePort")
+cable_material = SubResource("StandardMaterial3D_dmpup")
+metadata/_custom_type_script = "uid://ns5wpttu8hpj"
 
 [editable path="InteractableMultimeter/LeftSnappingZone"]
 [editable path="InteractableMultimeter/RightSnappingZone"]

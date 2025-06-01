@@ -11,10 +11,13 @@ signal voltage_measurement_updated(voltage: float)
 @export var voltage_step_threshold: float = 0.1  # Minimum difference to continue stepping
 
 # References
+@onready var multimeter_object: InteractableObject = $InteractableMultimeter
 @onready var display_label: Label3D = $InteractableMultimeter/Model/DisplayLabel
 @onready var on_off_button: PokeButton = $InteractableMultimeter/Model/OnOff_PokeButton
 @onready var positive_probe: InteractableObject = $InteractableMultimeterProbePositive
 @onready var negative_probe: InteractableObject = $InteractableMultimeterProbeNegative
+@onready var positive_cable: Cable = $CablePositive
+@onready var negative_cable: Cable = $CableNegative
 
 var is_powered_on: bool = false
 var is_measuring: bool = false
@@ -26,6 +29,9 @@ var target_voltage: float = 0.0
 
 func _ready() -> void:
   on_off_button.pressed.connect(_toggle_power)
+  
+  multimeter_object.snapped_to_zone.connect(_on_multimeter_snapped_to_zone)
+  multimeter_object.unsnapped_from_zone.connect(_on_multimeter_unsnapped_to_zone)
   
   # Connect probe signals
   positive_probe.entered_zone.connect(_on_positive_probe_connected)
@@ -79,6 +85,19 @@ func _power_off() -> void:
 func _update_display(text: String) -> void:
   if display_label:
     display_label.text = text
+
+func _on_multimeter_snapped_to_zone(zone: SnappingZone) -> void:
+  # Hide probes and cables if the multimeter got snapped (to the toolbox atm)
+  positive_probe.enabled = false
+  negative_probe.enabled = false
+  positive_cable.visible = false
+  negative_cable.visible = false
+  
+func _on_multimeter_unsnapped_to_zone() -> void:
+  positive_probe.enabled = true
+  negative_probe.enabled = true
+  positive_cable.visible = true
+  negative_cable.visible = true
 
 func _on_positive_probe_connected(zone: SnappingZone) -> void:
   positive_power_source = _find_power_source(zone)
