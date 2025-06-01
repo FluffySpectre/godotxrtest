@@ -8,10 +8,10 @@ class_name Cable extends Node3D
 @export_group("Physics")
 @export var cable_segments: int = 8      # Number of segments
 @export var gravity: float = 9.8         # Gravity strength
-@export var stiffness: float = 100.0     # Spring stiffness between segments
+@export var stiffness: float = 5.0       # Spring stiffness between segments
 @export var damping: float = 1.0         # Damping to reduce oscillation
 @export var mass: float = 0.05           # Mass of each segment
-@export var max_stretch: float = 1.5     # Maximum stretch allowed (multiplier of rest length)
+@export var max_stretch: float = 0.5     # Maximum stretch allowed (multiplier of rest length)
 
 var _line_mesh_instance: MeshInstance3D
 var _array_mesh: ArrayMesh
