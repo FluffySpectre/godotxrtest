@@ -85,11 +85,11 @@ func _process(delta: float) -> void:
   
   var cable_length = _get_cable_length()
   var texture_repeats = cable_length * dots_per_meter
-  cable_overlay_material.uv1_scale = Vector3(texture_repeats, 1.0, 1.0)
+  cable_overlay_material.uv1_scale.x = texture_repeats
   
   # Animate the flow by offsetting UV coordinates
   _flow_timer += delta
-  cable_overlay_material.uv1_offset = Vector3(_flow_timer * flow_speed, 0.0, 0.0)
+  cable_overlay_material.uv1_offset.x = _flow_timer * flow_speed
   
   # Wrap timer
   if _flow_timer > 100.0:
