@@ -10,6 +10,12 @@ signal voltage_measurement_updated(voltage: float)
 @export var voltage_step_size: float = 1.5  # Volts per update step
 @export var voltage_step_threshold: float = 0.1  # Minimum difference to continue stepping
 
+@export_group("Flow Visualization")
+@export var base_flow_speed: float = 2.0  # Base flow speed
+@export var flow_speed_multiplier: float = 0.1  # How much voltage affects flow speed
+@export var min_flow_speed: float = 0.5  # Minimum flow speed when measuring
+@export var max_flow_speed: float = 5.0  # Maximum flow speed
+
 # References
 @onready var multimeter_object: InteractableObject = $InteractableMultimeter
 @onready var display_label: Label3D = $InteractableMultimeter/Model/DisplayLabel
@@ -43,9 +49,9 @@ func _ready() -> void:
   measurement_timer.wait_time = update_rate
   measurement_timer.timeout.connect(_update_measurement)
   add_child(measurement_timer)
-
-func _process(delta: float) -> void:
-  pass
+  
+  # Initialize cable flow state
+  _update_cable_flow()
 
 func _toggle_power() -> void:
   is_powered_on = !is_powered_on
@@ -81,12 +87,14 @@ func _power_off() -> void:
     measured_voltage = 0.0
     target_voltage = 0.0
     emit_signal("measurement_ended")
+  
+  _update_cable_flow()
 
 func _update_display(text: String) -> void:
   if display_label:
     display_label.text = text
 
-func _on_multimeter_snapped_to_zone(zone: SnappingZone) -> void:
+func _on_multimeter_snapped_to_zone(_zone: SnappingZone) -> void:
   # Hide probes and cables if the multimeter got snapped (to the toolbox atm)
   positive_probe.enabled = false
   negative_probe.enabled = false
@@ -103,7 +111,7 @@ func _on_positive_probe_connected(zone: SnappingZone) -> void:
   positive_power_source = _find_power_source(zone)
   _check_measurement_state()
 
-func _on_positive_probe_disconnected(zone: SnappingZone) -> void:
+func _on_positive_probe_disconnected(_zone: SnappingZone) -> void:
   positive_power_source = null
   _check_measurement_state()
 
@@ -111,7 +119,7 @@ func _on_negative_probe_connected(zone: SnappingZone) -> void:
   negative_power_source = _find_power_source(zone)
   _check_measurement_state()
 
-func _on_negative_probe_disconnected(zone: SnappingZone) -> void:
+func _on_negative_probe_disconnected(_zone: SnappingZone) -> void:
   negative_power_source = null
   _check_measurement_state()
 
@@ -134,6 +142,9 @@ func _check_measurement_state() -> void:
     _update_target_voltage()
   elif !should_measure && is_measuring:
     _stop_measurement()
+  
+  # Always update cable flow when measurement state potentially changes
+  _update_cable_flow()
 
 func _start_measurement() -> void:
   if is_measuring:
@@ -142,6 +153,7 @@ func _start_measurement() -> void:
   is_measuring = true
   
   _update_target_voltage()
+  _update_cable_flow()
   
   emit_signal("measurement_started")
 
@@ -164,6 +176,7 @@ func _stop_measurement() -> void:
   is_measuring = false
   
   _update_target_voltage()
+  _update_cable_flow()
   
   emit_signal("measurement_ended")
 
@@ -176,6 +189,9 @@ func _update_measurement() -> void:
     _step_towards_target()
     _update_display(_format_voltage(measured_voltage))
     emit_signal("voltage_measurement_updated", measured_voltage)
+    
+    # Update flow speed based on current voltage
+    _update_cable_flow()
   else:
     # Step towards zero when not measuring
     if abs(measured_voltage) > voltage_step_threshold:
@@ -184,6 +200,9 @@ func _update_measurement() -> void:
     else:
       measured_voltage = 0.0
       _update_display("0.00 V")
+    
+    # Update flow even when not measuring (should be disabled)
+    _update_cable_flow()
 
 func _step_towards_target() -> void:
   var voltage_difference = target_voltage - measured_voltage
@@ -209,8 +228,39 @@ func _step_towards_zero() -> void:
   if abs(measured_voltage) <= voltage_step_threshold:
     measured_voltage = 0.0
 
+func _update_cable_flow() -> void:
+  if !positive_cable || !negative_cable:
+    return
+  
+  # Enable flow only when powered on and measuring
+  var should_show_flow = is_powered_on && is_measuring && abs(measured_voltage) > voltage_step_threshold
+  
+  positive_cable.enable_flow = should_show_flow
+  negative_cable.enable_flow = should_show_flow
+  
+  if should_show_flow:
+    # Calculate flow speed based on voltage magnitude
+    var voltage_magnitude = abs(measured_voltage)
+    var flow_speed = base_flow_speed + (voltage_magnitude * flow_speed_multiplier)
+    flow_speed = clamp(flow_speed, min_flow_speed, max_flow_speed)
+    
+    if measured_voltage > 0:
+      # Positive voltage: flow from multimeter to positive probe, from negative probe to multimeter
+      positive_cable.flow_speed = -flow_speed
+      negative_cable.flow_speed = flow_speed
+    else:
+      # Negative voltage: flow from multimeter to negative probe, from positive probe to multimeter  
+      positive_cable.flow_speed = flow_speed
+      negative_cable.flow_speed = -flow_speed
+    
+    print("Cable flow updated - Voltage: ", measured_voltage, "V, Flow speed: ", flow_speed)
+  else:
+    # Reset flow speed to stop animation
+    positive_cable.flow_speed = 0.0
+    negative_cable.flow_speed = 0.0
+
 func _format_voltage(voltage: float) -> String:
-  var abs_voltage = abs(voltage)
+  #var abs_voltage = abs(voltage)
   var unit = "V"
   var display_voltage = voltage
   
