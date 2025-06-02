@@ -26,7 +26,7 @@ signal enabled_changed(enabled: bool)
 @export var min_scale: float = 0.1
 @export var max_scale: float = 2.0
 @export var rotation_speed: float = 200.0
-@export var rotation_threshold: float = 0.02  # Distance in meters before rotation starts
+@export var rotation_threshold: float = 0.03  # Distance in meters before rotation starts
 @export var keep_over_ground: bool = true
 
 # Enable/Disable Properties
@@ -62,7 +62,7 @@ signal enabled_changed(enabled: bool)
 
 # Rotation Flick Properties
 @export var enable_rotation_flick: bool = true
-@export var rotation_flick_speed_threshold: float = 0.3  # Minimum angular speed to trigger flick (rad/s)
+@export var rotation_flick_speed_threshold: float = 1.5 # Minimum angular speed to trigger flick (rad/s)
 @export var rotation_flick_force_multiplier: float = 1.0  # How much force to apply to rotation
 @export var rotation_flick_deceleration: float = 3.0  # How quickly rotation flick slows down
 
@@ -827,6 +827,7 @@ func _end_rotation() -> void:
   # Check if we should apply rotation flick
   if enable_rotation_flick && abs(rotation_velocity) > rotation_flick_speed_threshold:
     rotation_flick_velocity = rotation_velocity * rotation_flick_force_multiplier
+    rotation_flick_velocity = clampf(rotation_flick_velocity, -10.0, 10.0) # Limit velocity
     rotation_flick_active = true
     print("Rotation flick activated with velocity: ", rotation_flick_velocity)
   else:
