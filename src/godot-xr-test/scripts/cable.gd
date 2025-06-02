@@ -213,8 +213,8 @@ func update_line() -> void:
     
     # Two triangles for the quad
     indices.append_array([
-      vertex_offset + 0, vertex_offset + 1, vertex_offset + 2,
-      vertex_offset + 0, vertex_offset + 2, vertex_offset + 3
+      vertex_offset + 0, vertex_offset + 2, vertex_offset + 1,
+      vertex_offset + 0, vertex_offset + 3, vertex_offset + 2
     ])
   
   if vertices.size() > 0:
