@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://cxi5gkvlpppqf"]
+[gd_scene load_steps=28 format=3 uid="uid://cxi5gkvlpppqf"]
 
 [ext_resource type="Script" uid="uid://bd4ss8ud3hrk6" path="res://scripts/interactable_object.gd" id="1_8jmwx"]
 [ext_resource type="Script" uid="uid://krcj11ih8pv0" path="res://scripts/voltage_measurement/multimeter_controller.gd" id="1_d472q"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://d1i6typ2ok0wq" path="res://scenes/interactables/interactable_multimeter_probe.tscn" id="12_d472q"]
 [ext_resource type="Script" uid="uid://ns5wpttu8hpj" path="res://scripts/cable.gd" id="13_dmpup"]
 [ext_resource type="PackedScene" uid="uid://coiu6lp8sjwfs" path="res://scenes/snapping_zone.tscn" id="13_p1bsh"]
+[ext_resource type="Texture2D" uid="uid://bq7ck5k7fvg8o" path="res://assets/textures/flow_strip.png" id="13_qt4fy"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_cescp"]
 size = Vector3(0.07, 0.12, 0.04)
@@ -61,11 +62,31 @@ metallic = 0.2
 roughness = 0.75
 point_size = 46.9
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f2fcq"]
+transparency = 1
+blend_mode = 1
+depth_draw_mode = 1
+shading_mode = 0
+albedo_texture = ExtResource("13_qt4fy")
+uv1_scale = Vector3(11.04, 0.5, 1)
+uv1_offset = Vector3(-2.21, -0.75, 1)
+texture_filter = 0
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dmpup"]
 albedo_color = Color(0, 0, 0, 1)
 metallic = 0.2
 roughness = 0.75
 point_size = 46.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mlrj6"]
+transparency = 1
+blend_mode = 1
+depth_draw_mode = 1
+shading_mode = 0
+albedo_texture = ExtResource("13_qt4fy")
+uv1_scale = Vector3(4.96, 0.47, 1)
+uv1_offset = Vector3(-7.25, -0.71, 0.7)
+texture_filter = 0
 
 [node name="InteractableMultimeter" type="Node3D"]
 script = ExtResource("1_d472q")
@@ -191,6 +212,8 @@ script = ExtResource("13_dmpup")
 start_node = NodePath("../InteractableMultimeter/Model/CablePortPositive")
 end_node = NodePath("../InteractableMultimeterProbePositive/Model/CablePort")
 cable_material = SubResource("StandardMaterial3D_p1bsh")
+enable_flow = true
+cable_overlay_material = SubResource("StandardMaterial3D_f2fcq")
 metadata/_custom_type_script = "uid://ns5wpttu8hpj"
 
 [node name="CableNegative" type="Node3D" parent="." node_paths=PackedStringArray("start_node", "end_node")]
@@ -198,6 +221,9 @@ script = ExtResource("13_dmpup")
 start_node = NodePath("../InteractableMultimeter/Model/CablePortNegative")
 end_node = NodePath("../InteractableMultimeterProbeNegative/Model/CablePort")
 cable_material = SubResource("StandardMaterial3D_dmpup")
+enable_flow = true
+cable_overlay_material = SubResource("StandardMaterial3D_mlrj6")
+flow_speed = -2.0
 metadata/_custom_type_script = "uid://ns5wpttu8hpj"
 
 [editable path="InteractableMultimeter/LeftSnappingZone"]

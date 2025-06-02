@@ -5,13 +5,19 @@ class_name Cable extends Node3D
 @export var cable_material: Material
 @export var cable_thickness: float = 0.002
 
-@export_group("Physics")
+@export_group("Physics Settings")
 @export var cable_segments: int = 8      # Number of segments
 @export var gravity: float = 9.8         # Gravity strength
 @export var stiffness: float = 5.0       # Spring stiffness between segments
 @export var damping: float = 1.0         # Damping to reduce oscillation
 @export var mass: float = 0.05           # Mass of each segment
 @export var max_stretch: float = 0.5     # Maximum stretch allowed (multiplier of rest length)
+
+@export_group("Flow Settings")
+@export var enable_flow: bool = false
+@export var cable_overlay_material: StandardMaterial3D
+@export var dots_per_meter: float = 50.0
+@export var flow_speed: float = 2.0
 
 var _line_mesh_instance: MeshInstance3D
 var _array_mesh: ArrayMesh
@@ -21,10 +27,15 @@ var _segment_positions: PackedVector3Array
 var _segment_velocities: PackedVector3Array
 var _rest_length: float
 var _total_cable_length: float
+var _camera: Camera3D
+var _flow_timer: float
 
 func _ready() -> void:
+  _camera = get_viewport().get_camera_3d()
+  
   _line_mesh_instance = MeshInstance3D.new()
   _line_mesh_instance.material_override = cable_material
+  _line_mesh_instance.material_overlay = cable_overlay_material
   add_child(_line_mesh_instance)
   
   _array_mesh = ArrayMesh.new()
@@ -64,6 +75,25 @@ func _initialize_physics() -> void:
     
     _segment_positions[i] = base_pos
     _segment_velocities[i] = Vector3.ZERO
+
+func _process(delta: float) -> void:
+  if !enable_flow || !start_node || !end_node || !cable_overlay_material:
+    _line_mesh_instance.material_overlay = null
+    return
+  
+  _line_mesh_instance.material_overlay = cable_overlay_material
+  
+  var cable_length = _get_cable_length()
+  var texture_repeats = cable_length * dots_per_meter
+  cable_overlay_material.uv1_scale = Vector3(texture_repeats, 1.0, 1.0)
+  
+  # Animate the flow by offsetting UV coordinates
+  _flow_timer += delta
+  cable_overlay_material.uv1_offset = Vector3(_flow_timer * flow_speed, 0.0, 0.0)
+  
+  # Wrap timer
+  if _flow_timer > 100.0:
+    _flow_timer = fmod(_flow_timer, 1.0)
 
 func _physics_process(delta: float) -> void:
   if !start_node || !end_node:
@@ -159,11 +189,10 @@ func update_line() -> void:
   
   _array_mesh.clear_surfaces()
   
-  var camera = get_viewport().get_camera_3d()
-  if !camera:
+  if !_camera:
     return
-    
-  var camera_pos = camera.global_position
+  
+  var camera_pos = _camera.global_position
   
   var vertices = PackedVector3Array()
   var normals = PackedVector3Array()
@@ -229,3 +258,8 @@ func update_line() -> void:
 
 func reset_cable() -> void:
   _initialize_physics()
+
+func _get_cable_length() -> float:
+  var start_pos = start_node.global_position
+  var end_pos = end_node.global_position
+  return end_pos.distance_to(start_pos)
