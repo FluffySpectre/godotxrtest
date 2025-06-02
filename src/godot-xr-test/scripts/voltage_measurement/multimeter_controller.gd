@@ -252,8 +252,6 @@ func _update_cable_flow() -> void:
       # Negative voltage: flow from multimeter to negative probe, from positive probe to multimeter  
       positive_cable.flow_speed = flow_speed
       negative_cable.flow_speed = -flow_speed
-    
-    print("Cable flow updated - Voltage: ", measured_voltage, "V, Flow speed: ", flow_speed)
   else:
     # Reset flow speed to stop animation
     positive_cable.flow_speed = 0.0
