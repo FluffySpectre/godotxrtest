@@ -57,14 +57,12 @@ roughness = 0.7
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p1bsh"]
 cull_mode = 2
-shading_mode = 0
 albedo_color = Color(0.740038, 0, 0.116075, 1)
 point_size = 46.9
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dmpup"]
 cull_mode = 2
-shading_mode = 0
-albedo_color = Color(0, 0, 0, 1)
+albedo_color = Color(0.0177324, 0.0177324, 0.0177324, 1)
 point_size = 46.9
 
 [node name="InteractableMultimeter" type="Node3D"]
