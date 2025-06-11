@@ -9,15 +9,17 @@ class_name GazeSelection extends Node3D
 ## Layer mask for interactable objects
 @export_flags_3d_physics var interaction_mask: int = 1
 
+@export var update_rate: float = 0.1
+
 @export_group("Raycast Configuration")
 ## Number of rays in the inner ring
-@export var inner_ring_ray_count: int = 8
+@export var inner_ring_ray_count: int = 4
 
 ## Radius of the inner ring (angle in degrees)
 @export var inner_ring_radius: float = 2.0
 
 ## Number of rays in the outer ring
-@export var outer_ring_ray_count: int = 12
+@export var outer_ring_ray_count: int = 6
 
 ## Radius of the outer ring (angle in degrees)
 @export var outer_ring_radius: float = 10.0
@@ -39,7 +41,7 @@ class_name GazeSelection extends Node3D
 @export var distance_weight: float = 1.0
 
 ## Enable sticky selection (once selected, objects remain selected more easily)
-@export var sticky_selection: bool = true
+@export var sticky_selection: bool = false
 
 ## If selected, additional weight applied to current selection
 @export var sticky_weight: float = 2.0
@@ -53,6 +55,8 @@ var selection_timer: float = 0.0
 ## Last frame's candidates with scores
 var last_frame_candidates = {}
 
+var _update_timer: float = 0.0
+
 func _ready() -> void:
   if xr_camera:
     print("GazeSelection initialized with head node: ", xr_camera.name)
@@ -61,6 +65,11 @@ func _physics_process(delta: float) -> void:
   # Update selection timer
   if selection_timer > 0:
     selection_timer -= delta
+  
+  _update_timer += delta
+  if _update_timer < update_rate:
+    return
+  _update_timer = 0.0
   
   # Update selection based on camera gaze
   _update_selection()
