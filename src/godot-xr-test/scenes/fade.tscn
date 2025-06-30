@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3 uid="uid://dpevtd4ycipqt"]
+
+[ext_resource type="Script" uid="uid://bj1f3g3vtll16" path="res://scripts/scene_management/fade.gd" id="1_nukjo"]
+[ext_resource type="Shader" uid="uid://dmw8a1hsqqrko" path="res://assets/shaders/fade.gdshader" id="2_76d3x"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_nukjo"]
+size = Vector2(2, 2)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_85vtu"]
+render_priority = 50
+shader = ExtResource("2_76d3x")
+shader_parameter/albedo = Color(0, 0, 0, 1)
+
+[node name="Fade" type="Node3D"]
+script = ExtResource("1_nukjo")
+
+[node name="FadeMesh" type="MeshInstance3D" parent="."]
+visible = false
+mesh = SubResource("QuadMesh_nukjo")
+surface_material_override/0 = SubResource("ShaderMaterial_85vtu")

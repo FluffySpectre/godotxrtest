@@ -9,6 +9,7 @@ enum ActionType {
   PLAY_SOUND,            ## Play an audio file
   PLAY_ANIMATION,        ## Play an animation
   TOGGLE_VISIBILITY,     ## Toggle visibility
+  TOGGLE_ENABLE,         ## Toggle enable state
   EMIT_PARTICLES,        ## Emit particles
   LOAD_SCENE,            ## Load a scene
   SPAWN_OBJECT,          ## Spawn an object
@@ -31,6 +32,7 @@ enum ActionType {
 @export var target_audio: AudioStream
 @export var target_animation: String
 @export var target_scene: PackedScene
+@export_file("*.tscn") var target_scene_load: String
 @export var target_particles: Node
 @export var target_position: Node3D
 @export var target_function: String
@@ -40,12 +42,13 @@ enum ActionType {
 @export_group("Action Parameters")
 @export var show: bool = true       # For SHOW_HIDE and ENABLE_DISABLE
 @export var apply_to_children: bool = true  # For CHANGE_MATERIAL - apply to all child meshes
+@export_file("*.tscn") var scene_data: String # For LOAD_SCENE - Additional data for the new scene
 
 # State tracking
 var using_material_1: bool = false  # Track which material is active for toggle
 
 func execute() -> void:
-  if not target_node and action_type != ActionType.NONE:
+  if !_can_execute():
     push_error("SignalAction: Target node not found")
     return
     
@@ -62,6 +65,11 @@ func execute() -> void:
     
     ActionType.TOGGLE_VISIBILITY:
       target_node.visible = !target_node.visible
+      
+    ActionType.TOGGLE_ENABLE:
+      var new_state = !target_node.visible
+      target_node.visible = new_state
+      target_node.process_mode = Node.PROCESS_MODE_INHERIT if new_state else Node.PROCESS_MODE_DISABLED
           
     ActionType.CHANGE_MATERIAL:
       if target_node is MeshInstance3D:
@@ -97,11 +105,10 @@ func execute() -> void:
         particles.emitting = true
     
     ActionType.LOAD_SCENE:
-      if target_scene:
-        if Engine.get_main_loop() and Engine.get_main_loop() is SceneTree:
-          var scene_tree = Engine.get_main_loop() as SceneTree
-          scene_tree.change_scene_to_packed(target_scene)
-          
+      if target_scene_load:
+        var base_scene = SceneUtils.get_base_scene(self)
+        base_scene.request_load_scene_f(target_scene_load, scene_data)
+        
     ActionType.SPAWN_OBJECT:
       if target_scene:
         var position_node = target_position
@@ -134,6 +141,13 @@ func execute() -> void:
           target_node.pause()
         else:
           target_node.play()
+
+func _can_execute() -> bool:
+  # Load scene doesn't need a target node
+  if action_type == ActionType.LOAD_SCENE:
+    return true
+  
+  return target_node && action_type != ActionType.NONE
 
 # Recursively apply material to all child meshes
 func _apply_material_to_children(node: Node, material: Material) -> void:

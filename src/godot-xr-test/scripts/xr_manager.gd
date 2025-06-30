@@ -1,4 +1,4 @@
-class_name XRManager extends Node3D
+class_name XRManager extends Node
 
 signal focus_lost
 signal focus_gained
@@ -7,7 +7,7 @@ signal pose_recentered
 @export var maximum_refresh_rate : int = 90
 
 @onready var viewport : Viewport = get_viewport()
-@onready var environment : Environment = $WorldEnvironment.environment
+#@onready var environment : Environment = $WorldEnvironment.environment
 
 static var instance: XRManager
 
@@ -110,6 +110,8 @@ func _on_openxr_stopping() -> void:
 
 # Handle OpenXR pose recentered signal
 func _on_openxr_pose_recentered() -> void:
+  #XRServer.center_on_hmd(XRServer.RESET_BUT_KEEP_TILT, true)
+  
   # User recentered view, we have to react to this by recentering the view.
   # This is game implementation dependent.
   emit_signal("pose_recentered")
@@ -123,9 +125,9 @@ func switch_to_ar() -> bool:
     xr_interface.environment_blend_mode = XRInterface.XR_ENV_BLEND_MODE_ADDITIVE
     viewport.transparent_bg = false
 
-  environment.background_mode = Environment.BG_COLOR
-  environment.background_color = Color(0.0, 0.0, 0.0, 0.0)
-  environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+  #environment.background_mode = Environment.BG_COLOR
+  #environment.background_color = Color(0.0, 0.0, 0.0, 0.0)
+  #environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
   return true
 
 func switch_to_vr() -> bool:
@@ -134,6 +136,9 @@ func switch_to_vr() -> bool:
     xr_interface.environment_blend_mode = XRInterface.XR_ENV_BLEND_MODE_OPAQUE
 
   viewport.transparent_bg = false
-  environment.background_mode = Environment.BG_SKY
-  environment.ambient_light_source = Environment.AMBIENT_SOURCE_BG
+  #environment.background_mode = Environment.BG_SKY
+  #environment.ambient_light_source = Environment.AMBIENT_SOURCE_BG
   return true
+
+func end_xr() -> void:
+  get_tree().quit()

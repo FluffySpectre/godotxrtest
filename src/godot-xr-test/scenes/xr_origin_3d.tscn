@@ -21,8 +21,9 @@ height = 0.01
 [sub_resource type="SphereShape3D" id="SphereShape3D_dd1ma"]
 radius = 0.005
 
-[node name="XROrigin3D" type="XROrigin3D"]
+[node name="XROrigin3D" type="XROrigin3D" node_paths=PackedStringArray("xr_camera")]
 script = ExtResource("1_4hrip")
+xr_camera = NodePath("XRCamera3D")
 
 [node name="XRCamera3D" type="XRCamera3D" parent="."]
 
@@ -155,6 +156,7 @@ scene_manager = NodePath("../OpenXRFbSceneManager")
 
 [node name="OpenXRFbSceneManager" type="OpenXRFbSceneManager" parent="."]
 scenes/floor = ExtResource("9_4hrip")
+scenes/couch = ExtResource("9_4hrip")
 scenes/table = ExtResource("9_4hrip")
 scenes/other = ExtResource("9_4hrip")
 

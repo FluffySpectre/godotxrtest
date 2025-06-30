@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3 uid="uid://4158nco6bj5k"]
+
+[ext_resource type="PackedScene" uid="uid://be3xnhmmb0v3j" path="res://scenes/xr_origin_3d.tscn" id="1_0i1wp"]
+[ext_resource type="PackedScene" uid="uid://dmtlerpr74ney" path="res://scenes/vehicle_inside.tscn" id="1_fpbg8"]
+[ext_resource type="Script" uid="uid://dm55qvw2qiyau" path="res://scenes/scenarios/voltage_measurement/scenario_voltage_measurement_scene.gd" id="1_xf711"]
+
+[node name="Scenario_VoltageMeasurement" type="Node3D"]
+script = ExtResource("1_xf711")
+
+[node name="XROrigin3D" parent="." instance=ExtResource("1_0i1wp")]
+
+[node name="VehicleInside" parent="." instance=ExtResource("1_fpbg8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)

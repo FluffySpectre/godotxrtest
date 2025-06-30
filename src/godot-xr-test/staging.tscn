@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://dcs245bxs3jn2"]
+
+[ext_resource type="Script" uid="uid://cuuqc12fb1tmf" path="res://scripts/scene_management/staging_scene.gd" id="1_k6wu6"]
+[ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://scripts/xr_manager.gd" id="1_xsy4s"]
+[ext_resource type="PackedScene" uid="uid://dpevtd4ycipqt" path="res://scenes/fade.tscn" id="3_fvjbg"]
+
+[node name="Staging" type="Node3D"]
+script = ExtResource("1_k6wu6")
+main_scene = "uid://bfrq8gdq0u3kt"
+
+[node name="Fade" parent="." instance=ExtResource("3_fvjbg")]
+
+[node name="Scene" type="Node3D" parent="."]
+
+[node name="XRManager" type="Node" parent="."]
+script = ExtResource("1_xsy4s")
+metadata/_custom_type_script = "uid://chgv7pdlmi7jk"

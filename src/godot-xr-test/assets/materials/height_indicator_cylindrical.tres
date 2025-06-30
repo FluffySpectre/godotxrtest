@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://ceheppglfj8nb"]
+
+[ext_resource type="Texture2D" uid="uid://dndn25lqjeqnx" path="res://assets/textures/height_indicator.png" id="1_p8j1o"]
+
+[resource]
+transparency = 1
+depth_draw_mode = 1
+shading_mode = 0
+albedo_color = Color(0.855459, 0.596554, 0, 1)
+albedo_texture = ExtResource("1_p8j1o")
+uv1_scale = Vector3(100, 2, 1)

@@ -1,0 +1,75 @@
+[gd_scene load_steps=6 format=3 uid="uid://w2yrfs2xol0h"]
+
+[ext_resource type="Material" uid="uid://c2qf6qxku45d8" path="res://assets/materials/height_indicator.tres" id="1_qpem7"]
+[ext_resource type="Script" uid="uid://dbwuo0tvvikk7" path="res://scripts/uv_scroll.gd" id="2_047gg"]
+[ext_resource type="Material" uid="uid://ceheppglfj8nb" path="res://assets/materials/height_indicator_cylindrical.tres" id="3_dtn63"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_pkujl"]
+material = ExtResource("1_qpem7")
+size = Vector2(3, 0.15)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_047gg"]
+material = ExtResource("3_dtn63")
+flip_faces = true
+top_radius = 1.5
+bottom_radius = 1.5
+height = 0.1
+cap_top = false
+cap_bottom = false
+
+[node name="HeightIndicator" type="Node3D"]
+
+[node name="Rectangular" type="Node3D" parent="."]
+visible = false
+
+[node name="NorthPlane" type="MeshInstance3D" parent="Rectangular"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
+mesh = SubResource("QuadMesh_pkujl")
+skeleton = NodePath("../..")
+
+[node name="UVScroll" type="Node" parent="Rectangular/NorthPlane"]
+script = ExtResource("2_047gg")
+offset = Vector3(-0.3, 0, 0)
+metadata/_custom_type_script = "uid://dbwuo0tvvikk7"
+
+[node name="SouthPlane" type="MeshInstance3D" parent="Rectangular"]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 1.5)
+mesh = SubResource("QuadMesh_pkujl")
+skeleton = NodePath("../..")
+
+[node name="UVScroll" type="Node" parent="Rectangular/SouthPlane"]
+script = ExtResource("2_047gg")
+offset = Vector3(-0.3, 0, 0)
+metadata/_custom_type_script = "uid://dbwuo0tvvikk7"
+
+[node name="WestPlane" type="MeshInstance3D" parent="Rectangular"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -1.5, 0, 0)
+mesh = SubResource("QuadMesh_pkujl")
+skeleton = NodePath("../..")
+
+[node name="UVScroll" type="Node" parent="Rectangular/WestPlane"]
+script = ExtResource("2_047gg")
+offset = Vector3(-0.3, 0, 0)
+metadata/_custom_type_script = "uid://dbwuo0tvvikk7"
+
+[node name="EastPlane" type="MeshInstance3D" parent="Rectangular"]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 1.5, 0, 0)
+mesh = SubResource("QuadMesh_pkujl")
+skeleton = NodePath("../..")
+
+[node name="UVScroll" type="Node" parent="Rectangular/EastPlane"]
+script = ExtResource("2_047gg")
+offset = Vector3(-0.3, 0, 0)
+metadata/_custom_type_script = "uid://dbwuo0tvvikk7"
+
+[node name="Cylindrical" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_047gg")
+
+[node name="UVScroll" type="Node" parent="Cylindrical"]
+script = ExtResource("2_047gg")
+offset = Vector3(-0.4, 0, 0)
+metadata/_custom_type_script = "uid://dbwuo0tvvikk7"
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.74665, 0.665217, 0, -0.665217, 0.74665, 0, 0.760063, 1.56452)
+visible = false

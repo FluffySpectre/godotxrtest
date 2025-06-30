@@ -1,0 +1,40 @@
+[gd_scene load_steps=7 format=3 uid="uid://b7qupdvysnta4"]
+
+[ext_resource type="PackedScene" uid="uid://w2yrfs2xol0h" path="res://scenes/height_indicator.tscn" id="1_ki0o7"]
+[ext_resource type="Script" uid="uid://box3x7qhsfe8u" path="res://scripts/height_measurement.gd" id="1_w7fb2"]
+[ext_resource type="Script" uid="uid://bnpn35ecxagl8" path="res://scripts/room_box.gd" id="3_20rq1"]
+[ext_resource type="AudioStream" uid="uid://cjgvdv7xqaeju" path="res://assets/sfx/success.wav" id="7_8yifp"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w7fb2"]
+transparency = 1
+depth_draw_mode = 1
+shading_mode = 0
+albedo_color = Color(0, 0, 0, 0.921569)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ki0o7"]
+flip_faces = true
+size = Vector3(10, 10, 10)
+
+[node name="HeightMeasurement" type="Node3D"]
+script = ExtResource("1_w7fb2")
+success_sound = ExtResource("7_8yifp")
+
+[node name="RoomBox" type="Node3D" parent="."]
+script = ExtResource("3_20rq1")
+box_material = SubResource("StandardMaterial3D_w7fb2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RoomBox"]
+mesh = SubResource("BoxMesh_ki0o7")
+
+[node name="HeightIndicator" parent="." instance=ExtResource("1_ki0o7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="HintLabel" type="Label3D" parent="."]
+transform = Transform3D(0.15, 0, 0, 0, 0.15, 0, 0, 0, 0.15, 0, 1.35759, -1.49526)
+alpha_cut = 1
+text = "Bitte ducke dich unter diese Linie."
+font_size = 64
+outline_size = 0
+vertical_alignment = 0
+
+[node name="SoundPlayer" type="AudioStreamPlayer3D" parent="."]
