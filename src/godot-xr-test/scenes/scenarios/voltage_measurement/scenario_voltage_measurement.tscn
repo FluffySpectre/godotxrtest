@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://4158nco6bj5k"]
+[gd_scene load_steps=14 format=3 uid="uid://4158nco6bj5k"]
 
 [ext_resource type="PackedScene" uid="uid://be3xnhmmb0v3j" path="res://scenes/xr_origin_3d.tscn" id="1_0i1wp"]
 [ext_resource type="PackedScene" uid="uid://dmtlerpr74ney" path="res://scenes/vehicle_inside.tscn" id="1_fpbg8"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://cxi5gkvlpppqf" path="res://scenes/interactables/interactable_multimeter.tscn" id="6_adg5w"]
 [ext_resource type="Script" uid="uid://cbycl5c22nqbf" path="res://scripts/signal_action.gd" id="7_t3ati"]
 [ext_resource type="PackedScene" uid="uid://cs717lg8ixhlw" path="res://scenes/scenarios/voltage_measurement/interactables/interactable_object_connection_box_1.tscn" id="9_t3ati"]
+[ext_resource type="PackedScene" uid="uid://b2h6l6smivi1b" path="res://scenes/scenarios/voltage_measurement/ui/task_hint_panel.tscn" id="11_1avyr"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t3ati"]
 transparency = 1
@@ -82,6 +83,10 @@ action_type = 1
 target_node = NodePath("../../../SnappingZoneConnectionBox/Preview")
 show = false
 metadata/_custom_type_script = "uid://cbycl5c22nqbf"
+
+[node name="UI" type="Node3D" parent="."]
+
+[node name="TaskHintPanel" parent="UI" instance=ExtResource("11_1avyr")]
 
 [editable path="Scene/Node3D/SnappingZoneConnectionBox"]
 [editable path="Scene/Node3D/InteractableMultimeter"]

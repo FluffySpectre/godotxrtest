@@ -1,0 +1,47 @@
+[gd_scene load_steps=5 format=3 uid="uid://b2h6l6smivi1b"]
+
+[ext_resource type="Script" uid="uid://bkle5nqp7uxko" path="res://scripts/floating_view_panel.gd" id="1_gedo7"]
+[ext_resource type="PackedScene" uid="uid://bkgjtu8qugixo" path="res://scenes/poke_button.tscn" id="2_grfy2"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_grfy2"]
+size = Vector3(0.26, 0.005, 0.06)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_grfy2"]
+size = Vector3(0.259412, 0.02, 0.0629834)
+
+[node name="TaskHintPanel" type="Node3D"]
+script = ExtResource("1_gedo7")
+panel_width = 0.25
+panel_height = 0.15
+panel_color = Color(0.211765, 0.227451, 0.227451, 0)
+position_offset = Vector3(0, -0.2, 0)
+metadata/_custom_type_script = "uid://bkle5nqp7uxko"
+
+[node name="TitleLabel" type="Label3D" parent="."]
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0.002)
+double_sided = false
+alpha_cut = 1
+text = "Willkommen! 
+Deine Aufgabe ist es, 
+eine Lampe zu überprüfen."
+font_size = 80
+outline_size = 0
+vertical_alignment = 2
+
+[node name="PokeButton" parent="." instance=ExtResource("2_grfy2")]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, -0.0524563, 0)
+
+[node name="ButtonMesh" parent="PokeButton" index="0"]
+mesh = SubResource("BoxMesh_grfy2")
+
+[node name="Label3D" type="Label3D" parent="PokeButton/ButtonMesh" index="0"]
+transform = Transform3D(0.05, 0, 0, 0, -2.18557e-09, 0.05, 0, -0.05, -2.18557e-09, 0, 0.00274103, 0)
+text = "Weiter"
+font_size = 80
+outline_size = 0
+
+[node name="CollisionShape3D" parent="PokeButton/InteractionArea" index="0"]
+transform = Transform3D(1, 0, 0, 0, 0.999951, 7.78044e-13, 0, -7.78044e-13, 0.999951, 0, 0, 0)
+shape = SubResource("BoxShape3D_grfy2")
+
+[editable path="PokeButton"]
