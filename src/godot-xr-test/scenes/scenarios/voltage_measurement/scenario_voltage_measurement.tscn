@@ -1,13 +1,91 @@
-[gd_scene load_steps=4 format=3 uid="uid://4158nco6bj5k"]
+[gd_scene load_steps=13 format=3 uid="uid://4158nco6bj5k"]
 
 [ext_resource type="PackedScene" uid="uid://be3xnhmmb0v3j" path="res://scenes/xr_origin_3d.tscn" id="1_0i1wp"]
 [ext_resource type="PackedScene" uid="uid://dmtlerpr74ney" path="res://scenes/vehicle_inside.tscn" id="1_fpbg8"]
 [ext_resource type="Script" uid="uid://dm55qvw2qiyau" path="res://scenes/scenarios/voltage_measurement/scenario_voltage_measurement_scene.gd" id="1_xf711"]
+[ext_resource type="PackedScene" uid="uid://feuakhpskkjl" path="res://scenes/toolbox.tscn" id="3_opxbu"]
+[ext_resource type="Script" uid="uid://b0dkb6enc3kh4" path="res://scripts/place_at_player.gd" id="4_e5hnr"]
+[ext_resource type="PackedScene" uid="uid://coiu6lp8sjwfs" path="res://scenes/snapping_zone.tscn" id="5_lfcf4"]
+[ext_resource type="Script" uid="uid://qr2w4gdcybmm" path="res://scripts/signal_responder.gd" id="6_47u68"]
+[ext_resource type="PackedScene" uid="uid://cxi5gkvlpppqf" path="res://scenes/interactables/interactable_multimeter.tscn" id="6_adg5w"]
+[ext_resource type="Script" uid="uid://cbycl5c22nqbf" path="res://scripts/signal_action.gd" id="7_t3ati"]
+[ext_resource type="PackedScene" uid="uid://cs717lg8ixhlw" path="res://scenes/scenarios/voltage_measurement/interactables/interactable_object_connection_box_1.tscn" id="9_t3ati"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t3ati"]
+transparency = 1
+depth_draw_mode = 1
+albedo_color = Color(0.223529, 0.513726, 0.2, 0.482353)
+
+[sub_resource type="BoxMesh" id="BoxMesh_t3ati"]
+material = SubResource("StandardMaterial3D_t3ati")
+size = Vector3(0.2, 0.2, 0.2)
 
 [node name="Scenario_VoltageMeasurement" type="Node3D"]
 script = ExtResource("1_xf711")
 
 [node name="XROrigin3D" parent="." instance=ExtResource("1_0i1wp")]
 
-[node name="VehicleInside" parent="." instance=ExtResource("1_fpbg8")]
+[node name="WristAttachments" type="Node3D" parent="."]
+
+[node name="Toolbox" parent="WristAttachments" node_paths=PackedStringArray("initial_objects") instance=ExtResource("3_opxbu")]
+initial_objects = [NodePath("../../Scene/Node3D/InteractableMultimeter/InteractableMultimeter"), NodePath("../../Scene/Node3D/InteractableObjectConnectionBox1")]
+
+[node name="Scene" type="Node3D" parent="."]
+
+[node name="PlaceAtPlayer" type="Node" parent="Scene"]
+script = ExtResource("4_e5hnr")
+metadata/_custom_type_script = "uid://b0dkb6enc3kh4"
+
+[node name="VehicleInside" parent="Scene" instance=ExtResource("1_fpbg8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+
+[node name="Node3D" type="Node3D" parent="Scene"]
+
+[node name="SnappingZoneConnectionBox" parent="Scene/Node3D" instance=ExtResource("5_lfcf4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.916727, -0.644116)
+object_filter_tag = "connection_box"
+
+[node name="VisualMesh" parent="Scene/Node3D/SnappingZoneConnectionBox" index="2"]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+
+[node name="Preview" type="Node3D" parent="Scene/Node3D/SnappingZoneConnectionBox"]
+visible = false
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Scene/Node3D/SnappingZoneConnectionBox/Preview"]
+mesh = SubResource("BoxMesh_t3ati")
+
+[node name="InteractableMultimeter" parent="Scene/Node3D" instance=ExtResource("6_adg5w")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.40468, 0.942725, -0.311016)
+
+[node name="InteractableObjectConnectionBox1" parent="Scene/Node3D" instance=ExtResource("9_t3ati")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.531412, 0.859521, -0.310153)
+
+[node name="Grabbed_SignalResponder" type="Node" parent="Scene/Node3D/InteractableObjectConnectionBox1"]
+script = ExtResource("6_47u68")
+signal_name = "grabbed"
+metadata/_custom_type_script = "uid://qr2w4gdcybmm"
+
+[node name="ShowPreview_SignalAction" type="Node" parent="Scene/Node3D/InteractableObjectConnectionBox1/Grabbed_SignalResponder" node_paths=PackedStringArray("target_node")]
+script = ExtResource("7_t3ati")
+action_type = 1
+target_node = NodePath("../../../SnappingZoneConnectionBox/Preview")
+metadata/_custom_type_script = "uid://cbycl5c22nqbf"
+
+[node name="Released_SignalResponder" type="Node" parent="Scene/Node3D/InteractableObjectConnectionBox1"]
+script = ExtResource("6_47u68")
+signal_name = "released"
+metadata/_custom_type_script = "uid://qr2w4gdcybmm"
+
+[node name="HidePreview_SignalAction" type="Node" parent="Scene/Node3D/InteractableObjectConnectionBox1/Released_SignalResponder" node_paths=PackedStringArray("target_node")]
+script = ExtResource("7_t3ati")
+action_type = 1
+target_node = NodePath("../../../SnappingZoneConnectionBox/Preview")
+show = false
+metadata/_custom_type_script = "uid://cbycl5c22nqbf"
+
+[editable path="Scene/Node3D/SnappingZoneConnectionBox"]
+[editable path="Scene/Node3D/InteractableMultimeter"]
+[editable path="Scene/Node3D/InteractableMultimeter/InteractableMultimeter/LeftSnappingZone"]
+[editable path="Scene/Node3D/InteractableMultimeter/InteractableMultimeter/RightSnappingZone"]
+[editable path="Scene/Node3D/InteractableMultimeter/InteractableMultimeterProbePositive"]
+[editable path="Scene/Node3D/InteractableMultimeter/InteractableMultimeterProbeNegative"]

@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://bos462vbqwcqk"]
+[gd_scene load_steps=5 format=3 uid="uid://bos462vbqwcqk"]
 
 [ext_resource type="Script" uid="uid://ugo3bs4l4yii" path="res://scenes/height_measurement/height_measurement_scene.gd" id="1_0wbbo"]
 [ext_resource type="PackedScene" uid="uid://be3xnhmmb0v3j" path="res://scenes/xr_origin_3d.tscn" id="2_xg5nf"]
 [ext_resource type="PackedScene" uid="uid://b7qupdvysnta4" path="res://scenes/height_measurement/height_measurement.tscn" id="3_7vsio"]
+[ext_resource type="Script" uid="uid://b0dkb6enc3kh4" path="res://scripts/place_at_player.gd" id="4_xg5nf"]
 
 [node name="HeightMeasurementScene" type="Node3D"]
 script = ExtResource("1_0wbbo")
@@ -10,3 +11,7 @@ script = ExtResource("1_0wbbo")
 [node name="XROrigin3D" parent="." instance=ExtResource("2_xg5nf")]
 
 [node name="HeightMeasurement" parent="." instance=ExtResource("3_7vsio")]
+
+[node name="PlaceAtPlayer" type="Node" parent="HeightMeasurement"]
+script = ExtResource("4_xg5nf")
+metadata/_custom_type_script = "uid://b0dkb6enc3kh4"

@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="GodotXRTest"
-run/main_scene="uid://bfrq8gdq0u3kt"
+run/main_scene="uid://dcs245bxs3jn2"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 

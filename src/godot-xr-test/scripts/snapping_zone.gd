@@ -81,9 +81,9 @@ func can_snap_object(object: InteractableObject) -> bool:
     return false
     
   # Check if object matches filter tag if one is set
-  if object_filter_tag && object.tag != object_filter_tag:
+  if object_filter_tag && !object.tags.has(object_filter_tag) && object.tag != object_filter_tag:
     return false
-  
+
   return true
 
 func snap_object(object: InteractableObject) -> bool:
@@ -218,7 +218,7 @@ func _handle_object_exited(object: InteractableObject) -> void:
 func _update_visual_state() -> void:
   if !visual_mesh:
     return
-    
+  
   # Choose material based on state
   if snapped_object && active_material:
     visual_mesh.material_override = active_material

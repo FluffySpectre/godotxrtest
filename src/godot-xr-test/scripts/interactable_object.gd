@@ -28,6 +28,7 @@ signal enabled_changed(enabled: bool)
 @export var rotation_speed: float = 200.0
 @export var rotation_threshold: float = 0.03  # Distance in meters before rotation starts
 @export var keep_over_ground: bool = true
+@export var object_name: String = ""
 
 # Enable/Disable Properties
 @export_group("Object State")
@@ -37,6 +38,7 @@ signal enabled_changed(enabled: bool)
 # Object Properties
 @export_group("Object Settings")
 @export var tag: String = ""  # Tag for filtering in SnappingZones
+@export var tags: Array[String] = [] # Tags for filtering in SnappingZones
 
 # Grab Properties
 @export_group("Grab Settings")
@@ -52,6 +54,7 @@ signal enabled_changed(enabled: bool)
 @export var snap_zone_max_distance: float = 0.5  # Maximum distance to consider for auto-snapping to zones
 @export var home_snap_zone: SnappingZone  # Home snapping zone
 @export var snap_during_flick: bool = true  # Whether to snap to zones during flick motion
+@export var snap_label_offset: Vector3 = Vector3(0.25, 0.0, 0.0) # Offset for the object label
 
 # Flick Properties
 @export_group("Flick Settings")
@@ -1128,7 +1131,7 @@ func _find_closest_zone() -> SnappingZone:
     if !zone.enabled:
       continue
       
-    if zone.object_filter_tag && zone.object_filter_tag != tag:
+    if zone.object_filter_tag && !tags.has(zone.object_filter_tag) && zone.object_filter_tag != tag:
       continue
       
     var distance = global_position.distance_to(zone.global_position)
@@ -1138,7 +1141,7 @@ func _find_closest_zone() -> SnappingZone:
       
   return closest_zone
 
-func _snap_to_zone(zone: SnappingZone) -> void:
+func _snap_to_zone(zone: SnappingZone, animate: bool = true) -> void:
   if !zone || is_snapped_to_zone:
     return
   
@@ -1146,7 +1149,7 @@ func _snap_to_zone(zone: SnappingZone) -> void:
   
   # Set up animation
   _cancel_snap_back()  # Cancel any existing animations
-  is_snapping_back = true
+  is_snapping_back= true
   
   # Play snap sound
   if sound_player && snap_to_zone_sound:
@@ -1164,13 +1167,18 @@ func _snap_to_zone(zone: SnappingZone) -> void:
     # Apply target scale to the transform
     target_transform.basis = target_transform.basis.scaled(zone.snap_scale)
     
-    # Animate snapping
-    snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-    snap_back_tween.tween_method(
-      func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress),
-      0.0, 1.0, snap_back_speed
-    )
-    snap_back_tween.finished.connect(func(): _on_snap_to_zone_complete(zone))
+    if animate:
+      # Animate snapping
+      snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+      snap_back_tween.tween_method(
+        func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress),
+        0.0, 1.0, snap_back_speed
+      )
+      snap_back_tween.finished.connect(func(): _on_snap_to_zone_complete(zone))
+    else:
+      global_transform = target_transform
+      _on_snap_to_zone_complete(zone)
+      
   else:
     _on_snap_to_zone_complete(zone)
 
