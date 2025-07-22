@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3 uid="uid://dlue3wj3ddohv"]
+
+[ext_resource type="PackedScene" uid="uid://bkgjtu8qugixo" path="res://scenes/poke_button.tscn" id="1_f68r8"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_f68r8"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 0.005
+
+[node name="HintButton" type="Node3D"]
+
+[node name="PokeButton" parent="." instance=ExtResource("1_f68r8")]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+
+[node name="ButtonMesh" parent="PokeButton" index="0"]
+mesh = SubResource("CylinderMesh_f68r8")
+
+[node name="Label3D" type="Label3D" parent="PokeButton/ButtonMesh" index="0"]
+transform = Transform3D(0.16, 0, 0, 0, -6.99382e-09, 0.16, 0, -0.16, -6.99382e-09, 0, 0.00252736, -1.10474e-10)
+text = "?"
+font_size = 100
+outline_size = 0
+
+[node name="CollisionShape3D" parent="PokeButton/InteractionArea" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000912597, 0.000334473, 0.000177609)
+
+[editable path="PokeButton"]

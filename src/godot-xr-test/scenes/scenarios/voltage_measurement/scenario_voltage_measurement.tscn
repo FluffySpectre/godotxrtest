@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://4158nco6bj5k"]
+[gd_scene load_steps=15 format=3 uid="uid://4158nco6bj5k"]
 
 [ext_resource type="PackedScene" uid="uid://be3xnhmmb0v3j" path="res://scenes/xr_origin_3d.tscn" id="1_0i1wp"]
 [ext_resource type="PackedScene" uid="uid://dmtlerpr74ney" path="res://scenes/vehicle_inside.tscn" id="1_fpbg8"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://cbycl5c22nqbf" path="res://scripts/signal_action.gd" id="7_t3ati"]
 [ext_resource type="PackedScene" uid="uid://cs717lg8ixhlw" path="res://scenes/scenarios/voltage_measurement/interactables/interactable_object_connection_box_1.tscn" id="9_t3ati"]
 [ext_resource type="PackedScene" uid="uid://b2h6l6smivi1b" path="res://scenes/scenarios/voltage_measurement/ui/task_hint_panel.tscn" id="11_1avyr"]
+[ext_resource type="PackedScene" uid="uid://dlue3wj3ddohv" path="res://scenes/scenarios/voltage_measurement/ui/hint_button.tscn" id="12_t3nv7"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t3ati"]
 transparency = 1
@@ -87,6 +88,9 @@ metadata/_custom_type_script = "uid://cbycl5c22nqbf"
 [node name="UI" type="Node3D" parent="."]
 
 [node name="TaskHintPanel" parent="UI" instance=ExtResource("11_1avyr")]
+
+[node name="HintButton" parent="UI" instance=ExtResource("12_t3nv7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.321985, 0.927091, -0.863196)
 
 [editable path="Scene/Node3D/SnappingZoneConnectionBox"]
 [editable path="Scene/Node3D/InteractableMultimeter"]
