@@ -18,3 +18,7 @@ func _try_attach_to_rig() -> void:
   get_parent().reparent(attachment_node, false)
   
   _is_attached = true
+
+func change_attachment_point(new_attachment_point: XRRig.AttachmentPoint) -> void:
+  attachment_point = new_attachment_point
+  _try_attach_to_rig()
