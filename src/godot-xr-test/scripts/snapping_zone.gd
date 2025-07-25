@@ -7,7 +7,7 @@ signal object_snapped(object: InteractableObject)
 signal object_unsnapped(object: InteractableObject)
 
 # Properties
-@export var enabled: bool = true
+@export var enabled: bool = true : set = set_enabled, get = get_enabled
 @export var highlight_on_proximity: bool = true
 @export var auto_snap_when_close: bool = false
 @export var snap_distance: float = 0.3  # Distance when auto-snap activates
@@ -38,6 +38,24 @@ signal object_unsnapped(object: InteractableObject)
 var snapped_object: InteractableObject = null
 var objects_in_zone: Array[InteractableObject] = []
 var is_highlighted: bool = false
+var _enabled: bool = true
+var _snapped_object_original_enabled_state: bool = true
+
+func set_enabled(value: bool) -> void:
+  if _enabled == value:
+    return
+    
+  _enabled = value
+  
+  # Propagate enabled state to snapped object
+  if snapped_object:
+    if _enabled:
+      snapped_object.enabled = _snapped_object_original_enabled_state
+    else:
+      snapped_object.enabled = false
+
+func get_enabled() -> bool:
+  return _enabled
 
 func _ready() -> void:
   # Connect area signals for both bodies and areas
@@ -104,11 +122,17 @@ func snap_object(object: InteractableObject) -> bool:
   if single_object && snapped_object && snapped_object != object:
     unsnap_object(snapped_object)
   
+  # Store original enabled state before modifying it
+  _snapped_object_original_enabled_state = object.enabled
+  
   # Set as snapped
   snapped_object = object
   
   # Tell the object it's been snapped
   object.snap_to_zone(self)
+  
+  # Propagate zone's enabled state to the snapped object
+  object.enabled = enabled
   
   # Update visual state
   _update_visual_state()
@@ -126,6 +150,9 @@ func snap_object(object: InteractableObject) -> bool:
 func unsnap_object(object: InteractableObject) -> bool:
   if !object || snapped_object != object:
     return false
+  
+  # Restore original enabled state
+  object.enabled = _snapped_object_original_enabled_state
   
   # Clear reference
   snapped_object = null
