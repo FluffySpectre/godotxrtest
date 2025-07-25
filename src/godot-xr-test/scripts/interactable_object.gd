@@ -55,6 +55,8 @@ signal enabled_changed(enabled: bool)
 @export var home_snap_zone: SnappingZone  # Home snapping zone
 @export var snap_during_flick: bool = true  # Whether to snap to zones during flick motion
 @export var snap_label_offset: Vector3 = Vector3(0.25, 0.0, 0.0) # Offset for the object label
+@export var zone_approach_speed: float = 8.0  # Speed when smoothly moving towards zone target
+@export var zone_snap_threshold: float = 0.05  # Distance threshold to snap directly to zone (no smoothing)
 
 # Flick Properties
 @export_group("Flick Settings")
@@ -115,9 +117,11 @@ var original_parent: Node = null       # Store the original parent for when we'r
 var pre_grab_transform: Transform3D    # Store the transform before grabbing
 var snap_back_tween: Tween             # Tween for snap back animation
 
-# Snapping zone state variables
+# Snapping zone state variables - UPDATED FOR TRANSFORM FOLLOWING
 var current_zone: SnappingZone = null  # Currently snapped to zone
 var nearby_zones: Array[SnappingZone] = []  # Zones this object is inside
+var _following_zone_transform: bool = false  # Whether we're following a zone's transform
+var _original_transform_before_snap: Transform3D  # Store original transform before snapping
 
 # Flick state variables
 var flick_velocity: Vector3 = Vector3.ZERO   # Current flick velocity
@@ -264,21 +268,18 @@ func _snap_to_home_zone() -> void:
   
   print("Snapping to starting zone: ", zone.name)
   
-  # Set position and rotation immediately (no animation)
-  global_position = zone.get_snap_position()
-  global_rotation = zone.get_snap_rotation()
+  # Store original transform
+  _original_transform_before_snap = global_transform
   
-  # Apply snap scale
-  if zone.snap_scale != Vector3.ONE:
-    scale = zone.snap_scale
+  # Set position and rotation immediately (no animation)
+  var target_transform = zone.get_snap_transform()
+  global_transform = target_transform
   
   # Update our state
   if zone.snap_object(self):
     current_zone = zone
     is_snapped_to_zone = true
-    
-    # Reparent to the zone
-    reparent.call_deferred(zone)
+    _following_zone_transform = true
     
     emit_signal("snapped_to_zone", zone)
   else:
@@ -288,6 +289,10 @@ func _process(delta: float) -> void:
   # Don't process interactions if disabled
   if !_enabled:
     return
+  
+  # Handle zone transform following - UPDATED TWO-PHASE SYSTEM
+  if _following_zone_transform && current_zone && !is_grabbed && !is_moving:
+    _update_zone_following(delta)
   
   # Update hand positions
   _update_hand_positions()
@@ -345,6 +350,20 @@ func _process(delta: float) -> void:
     _update_position()
   elif is_rotating && can_rotate && is_rotation_active:
     _update_rotation(delta)
+
+func _update_zone_following(delta: float) -> void:
+  if !current_zone:
+    return
+    
+  var target_transform = current_zone.get_snap_transform()
+  var distance_to_target = global_transform.origin.distance_to(target_transform.origin)
+  
+  if distance_to_target > zone_snap_threshold:
+    # Smooth movement towards the zone target
+    global_transform = global_transform.interpolate_with(target_transform, zone_approach_speed * delta)
+  else:
+    # Stick to the zone
+    global_transform = target_transform
 
 func _physics_process(delta: float) -> void:
   # Don't process physics if disabled
@@ -1156,30 +1175,21 @@ func _snap_to_zone(zone: SnappingZone, animate: bool = true) -> void:
     sound_player.stream = snap_to_zone_sound
     sound_player.play()
   
-  if !zone.maintain_global_transform:
-    # Get target position and rotation from the zone
-    var target_position = zone.get_snap_position()
-    var target_rotation = zone.get_snap_rotation()
-    
-    var initial_transform = global_transform
-    var target_transform = Transform3D(Basis.from_euler(target_rotation), target_position)
-    
-    # Apply target scale to the transform
-    target_transform.basis = target_transform.basis.scaled(zone.snap_scale)
-    
-    if animate:
-      # Animate snapping
-      snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-      snap_back_tween.tween_method(
-        func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress),
-        0.0, 1.0, snap_back_speed
-      )
-      snap_back_tween.finished.connect(func(): _on_snap_to_zone_complete(zone))
-    else:
-      global_transform = target_transform
-      _on_snap_to_zone_complete(zone)
-      
+  # Get target transform from the zone
+  var target_transform = zone.get_snap_transform()
+  
+  var initial_transform = global_transform
+  
+  if animate:
+    # Animate snapping
+    snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+    snap_back_tween.tween_method(
+      func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress),
+      0.0, 1.0, snap_back_speed
+    )
+    snap_back_tween.finished.connect(func(): _on_snap_to_zone_complete(zone))
   else:
+    global_transform = target_transform
     _on_snap_to_zone_complete(zone)
 
 func _on_snap_to_zone_complete(zone: SnappingZone) -> void:
@@ -1190,16 +1200,15 @@ func _on_snap_to_zone_complete(zone: SnappingZone) -> void:
   if zone && zone.snap_object(self):
     current_zone = zone
     is_snapped_to_zone = true
-    
-    reparent(current_zone)
+    _following_zone_transform = true  # Start following the zone's transform
     
     emit_signal("snapped_to_zone", zone)
 
 func snap_to_zone(zone: SnappingZone) -> void:
   if zone && !is_grabbed && !is_snapped_to_zone:
     current_zone = zone
-    
     is_snapped_to_zone = true
+    _following_zone_transform = true  # Start following the zone's transform
     
     emit_signal("snapped_to_zone", zone)
 
@@ -1209,13 +1218,9 @@ func unsnap_from_zone() -> void:
     if current_zone.snapped_object == self:
       current_zone.unsnap_object(self)
     
-    # TODO: Fix me
-    # The following reparenting is needed for cases where an unsnap is 
-    # initiated without prior grabbing
-    #reparent(original_parent)
-    
     # Reset state
     is_snapped_to_zone = false
+    _following_zone_transform = false  # Stop following zone transform
     current_zone = null
     
     # Animate back to the original scale
@@ -1230,6 +1235,29 @@ func unsnap_from_zone() -> void:
     
     # Emit signal
     emit_signal("unsnapped_from_zone")
+
+func _animate_to_zone(zone: SnappingZone, animate: bool = false) -> void:
+  if !zone:
+    return
+    
+  # Store original transform if we haven't already
+  if !_following_zone_transform:
+    _original_transform_before_snap = global_transform
+  
+  if animate:
+    # Animate to the zone
+    var target_transform = zone.get_snap_transform()
+    var initial_transform = global_transform
+    
+    snap_back_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+    snap_back_tween.tween_method(
+      func(progress: float): global_transform = initial_transform.interpolate_with(target_transform, progress),
+      0.0, 1.0, snap_back_speed
+    )
+    snap_back_tween.finished.connect(func(): zone.snap_object(self))
+  else:
+    # Snap immediately
+    zone.snap_object(self)
 
 func entered_snapping_zone(zone: SnappingZone) -> void:
   if zone && !nearby_zones.has(zone):

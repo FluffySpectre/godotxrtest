@@ -14,7 +14,6 @@ signal object_unsnapped(object: InteractableObject)
 @export var snap_offset: Vector3 = Vector3.ZERO
 @export var snap_rotation: Vector3 = Vector3.ZERO
 @export var snap_scale: Vector3 = Vector3.ONE
-@export var maintain_global_transform: bool = false
 
 @export_group("Object Filtering")
 @export var object_filter_tag: String = ""  # Only snap objects with this tag
@@ -74,6 +73,17 @@ func get_snap_position() -> Vector3:
 
 func get_snap_rotation() -> Vector3:
   return snap_position.global_rotation + snap_rotation
+
+func get_snap_transform() -> Transform3D:
+  var transform = Transform3D()
+  transform.origin = get_snap_position()
+  transform.basis = Basis.from_euler(get_snap_rotation())
+  
+  # Apply snap scale
+  if snap_scale != Vector3.ONE:
+    transform.basis = transform.basis.scaled(snap_scale)
+  
+  return transform
 
 func can_snap_object(object: InteractableObject) -> bool:
   # Check if object is valid for snapping
