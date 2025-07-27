@@ -4,6 +4,7 @@
 [ext_resource type="Shader" uid="uid://dmw8a1hsqqrko" path="res://assets/shaders/fade.gdshader" id="2_76d3x"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_nukjo"]
+custom_aabb = AABB(-5000, -5000, -5000, 10000, 10000, 10000)
 size = Vector2(2, 2)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_85vtu"]
