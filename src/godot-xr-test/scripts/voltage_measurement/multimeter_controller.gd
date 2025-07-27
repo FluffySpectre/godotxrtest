@@ -19,7 +19,7 @@ signal voltage_measurement_updated(voltage: float)
 # References
 @onready var multimeter_object: InteractableObject = $InteractableMultimeter
 @onready var display_label: Label3D = $InteractableMultimeter/Model/DisplayLabel
-@onready var on_off_button: PokeButton = $InteractableMultimeter/Model/OnOff_PokeButton
+@onready var on_off_button: RotaryKnob = $InteractableMultimeter/Model/OnOff_RotaryKnob
 @onready var positive_probe: InteractableObject = $InteractableMultimeterProbePositive
 @onready var negative_probe: InteractableObject = $InteractableMultimeterProbeNegative
 @onready var positive_cable: Cable = $CablePositive
@@ -34,7 +34,7 @@ var measured_voltage: float = 0.0
 var target_voltage: float = 0.0
 
 func _ready() -> void:
-  on_off_button.pressed.connect(_toggle_power)
+  on_off_button.step_changed.connect(_toggle_power)
   
   multimeter_object.snapped_to_zone.connect(_on_multimeter_snapped_to_zone)
   multimeter_object.unsnapped_from_zone.connect(_on_multimeter_unsnapped_to_zone)
@@ -53,8 +53,11 @@ func _ready() -> void:
   # Initialize cable flow state
   _update_cable_flow()
 
-func _toggle_power() -> void:
-  is_powered_on = !is_powered_on
+func _toggle_power(step_index: int) -> void:
+  if step_index == 0 && !is_powered_on:
+    is_powered_on = true
+  elif step_index == 1 && is_powered_on:
+    is_powered_on = false
 
   if is_powered_on:
     _power_on()

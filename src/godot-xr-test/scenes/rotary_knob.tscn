@@ -1,0 +1,50 @@
+[gd_scene load_steps=8 format=3 uid="uid://ygmgtq6ew0b0"]
+
+[ext_resource type="Script" uid="uid://cnwo65h03yglf" path="res://scripts/rotary_knob.gd" id="1_3g0xb"]
+[ext_resource type="Script" uid="uid://di7ebtlpk1ums" path="res://scripts/interaction_area.gd" id="2_l3rj3"]
+[ext_resource type="Material" uid="uid://bprraxubu53yv" path="res://assets/materials/interaction_wireframe_area.tres" id="3_r8apn"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cgapp"]
+top_radius = 0.04
+bottom_radius = 0.04
+height = 0.02
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cgapp"]
+albedo_color = Color(0.131379, 0.131379, 0.131379, 1)
+
+[sub_resource type="QuadMesh" id="QuadMesh_3g0xb"]
+material = SubResource("StandardMaterial3D_cgapp")
+size = Vector2(0.01, 0.03)
+orientation = 1
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_efxa6"]
+size = Vector3(0.1, 0.085498, 0.1)
+
+[node name="RotaryKnob" type="Node3D" node_paths=PackedStringArray("knob_node")]
+script = ExtResource("1_3g0xb")
+min_angle = 0.0
+max_angle = 140.0
+knob_node = NodePath("Knob")
+
+[node name="Knob" type="Node3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Knob"]
+mesh = SubResource("CylinderMesh_cgapp")
+skeleton = NodePath("../..")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Knob/MeshInstance3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0101393, -0.0221439)
+mesh = SubResource("QuadMesh_3g0xb")
+skeleton = NodePath("../..")
+
+[node name="InteractionArea" type="Node3D" parent="."]
+
+[node name="InteractionAreaInner" type="Area3D" parent="InteractionArea"]
+script = ExtResource("2_l3rj3")
+interaction_area_material = ExtResource("3_r8apn")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea/InteractionAreaInner"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0291748, 0)
+shape = SubResource("BoxShape3D_efxa6")
+
+[node name="SoundPlayer" type="AudioStreamPlayer3D" parent="."]
