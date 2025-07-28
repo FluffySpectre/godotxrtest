@@ -1,13 +1,18 @@
-[gd_scene load_steps=3 format=3 uid="uid://dlue3wj3ddohv"]
+[gd_scene load_steps=5 format=3 uid="uid://dlue3wj3ddohv"]
 
 [ext_resource type="PackedScene" uid="uid://bkgjtu8qugixo" path="res://scenes/poke_button.tscn" id="1_f68r8"]
+[ext_resource type="Script" uid="uid://v7lexe5a7d3t" path="res://scripts/hint_button.gd" id="1_jpt7f"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_f68r8"]
 top_radius = 0.05
 bottom_radius = 0.05
 height = 0.005
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_jpt7f"]
+size = Vector3(0.109348, 0.0364661, 0.110837)
+
 [node name="HintButton" type="Node3D"]
+script = ExtResource("1_jpt7f")
 
 [node name="PokeButton" parent="." instance=ExtResource("1_f68r8")]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
@@ -22,6 +27,7 @@ font_size = 100
 outline_size = 0
 
 [node name="CollisionShape3D" parent="PokeButton/InteractionArea" index="0"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000912597, 0.000334473, 0.000177609)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.000593262, 0.000778199, -0.000556033)
+shape = SubResource("BoxShape3D_jpt7f")
 
 [editable path="PokeButton"]
