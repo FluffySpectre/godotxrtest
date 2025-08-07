@@ -9,7 +9,7 @@ background_mode = 1
 
 [node name="Staging" type="Node3D"]
 script = ExtResource("1_k6wu6")
-main_scene = "uid://bfrq8gdq0u3kt"
+main_scene = "uid://dtglmgxplxa1p"
 
 [node name="Fade" parent="." instance=ExtResource("3_fvjbg")]
 

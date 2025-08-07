@@ -1,0 +1,54 @@
+[gd_scene load_steps=9 format=3 uid="uid://dtglmgxplxa1p"]
+
+[ext_resource type="Script" uid="uid://16sjmh2i0lpk" path="res://splash_scene.gd" id="1_13jq6"]
+[ext_resource type="Script" uid="uid://bkle5nqp7uxko" path="res://scripts/floating_view_panel.gd" id="1_b04ml"]
+[ext_resource type="Texture2D" uid="uid://weu117557dsi" path="res://icon.svg" id="2_50j67"]
+[ext_resource type="Script" uid="uid://c5ja1fnfgrodr" path="res://scripts/xr_rig.gd" id="2_wyt6d"]
+[ext_resource type="Script" uid="uid://b0dkb6enc3kh4" path="res://scripts/place_at_player.gd" id="4_xoh7v"]
+
+[sub_resource type="Environment" id="Environment_a3dr8"]
+background_mode = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_13jq6"]
+shading_mode = 0
+albedo_color = Color(0, 0, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_13jq6"]
+material = SubResource("StandardMaterial3D_13jq6")
+flip_faces = true
+size = Vector3(500, 500, 500)
+
+[node name="Splash" type="Node3D"]
+script = ExtResource("1_13jq6")
+main_scene = "uid://bfrq8gdq0u3kt"
+
+[node name="XROrigin3D" type="XROrigin3D" parent="." node_paths=PackedStringArray("xr_camera")]
+script = ExtResource("2_wyt6d")
+xr_camera = NodePath("XRCamera3D")
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
+environment = SubResource("Environment_a3dr8")
+
+[node name="Scene" type="Node3D" parent="."]
+
+[node name="PlaceAtPlayer" type="Node" parent="Scene"]
+script = ExtResource("4_xoh7v")
+metadata/_custom_type_script = "uid://b0dkb6enc3kh4"
+
+[node name="Cube" type="MeshInstance3D" parent="Scene"]
+mesh = SubResource("BoxMesh_13jq6")
+skeleton = NodePath("../..")
+
+[node name="FloatingViewPanel" type="Node3D" parent="Scene"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+script = ExtResource("1_b04ml")
+panel_color = Color(0.2, 0.2, 0.2, 0)
+distance_from_camera = 2.0
+position_offset = Vector3(0, -0.5, 0)
+metadata/_custom_type_script = "uid://bkle5nqp7uxko"
+
+[node name="Contents" type="Node3D" parent="Scene/FloatingViewPanel"]
+
+[node name="Logo" type="Sprite3D" parent="Scene/FloatingViewPanel/Contents"]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+texture = ExtResource("2_50j67")
