@@ -1,14 +1,22 @@
-[gd_scene load_steps=4 format=3 uid="uid://dcs245bxs3jn2"]
+[gd_scene load_steps=5 format=3 uid="uid://dcs245bxs3jn2"]
 
 [ext_resource type="Script" uid="uid://cuuqc12fb1tmf" path="res://scripts/scene_management/staging_scene.gd" id="1_k6wu6"]
 [ext_resource type="Script" uid="uid://chgv7pdlmi7jk" path="res://scripts/xr_manager.gd" id="1_xsy4s"]
 [ext_resource type="PackedScene" uid="uid://dpevtd4ycipqt" path="res://scenes/fade.tscn" id="3_fvjbg"]
+
+[sub_resource type="Environment" id="Environment_fvjbg"]
+background_mode = 1
 
 [node name="Staging" type="Node3D"]
 script = ExtResource("1_k6wu6")
 main_scene = "uid://bfrq8gdq0u3kt"
 
 [node name="Fade" parent="." instance=ExtResource("3_fvjbg")]
+
+[node name="XROrigin3D" type="XROrigin3D" parent="."]
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
+environment = SubResource("Environment_fvjbg")
 
 [node name="Scene" type="Node3D" parent="."]
 

@@ -16,13 +16,10 @@ var current_scene_path: String
 var _tween: Tween
 
 func _ready() -> void:
+  set_fade(1.0)
   load_scene(main_scene)
 
 func load_scene(scene_path: String, user_data = null) -> void:
-  # Start the threaded loading of the scene. If the scene is already cached
-  # then this will finish immediately with THREAD_LOAD_LOADED
-  ResourceLoader.load_threaded_request(scene_path)
-  
   # If a current scene is visible then fade it out and unload it
   if current_scene:
     # Report pre-exiting and remove the scene signals
@@ -43,7 +40,16 @@ func load_scene(scene_path: String, user_data = null) -> void:
     _scene_container.remove_child(current_scene)
     current_scene.queue_free()  
     current_scene = null
-    
+  
+  # Enable staging rig again
+  $XROrigin3D.set_process_internal(true)
+  $XROrigin3D.current = true
+  $XROrigin3D/XRCamera3D.current = true
+  
+  # Start the threaded loading of the scene. If the scene is already cached
+  # then this will finish immediately with THREAD_LOAD_LOADED
+  ResourceLoader.load_threaded_request(scene_path)
+  
   if ResourceLoader.load_threaded_get_status(scene_path) != ResourceLoader.THREAD_LOAD_LOADED:
     # Loop waiting for the scene to load
     var res: ResourceLoader.ThreadLoadStatus
@@ -58,7 +64,10 @@ func load_scene(scene_path: String, user_data = null) -> void:
       # Report the error to the log and console
       push_error("Error ", res, " loading resource ", scene_path)
       get_tree().quit(1)
-  
+    
+  # Disable staging rig
+  $XROrigin3D.set_process_internal(false)
+    
   # Get the loaded scene
   var new_scene: PackedScene = ResourceLoader.load_threaded_get(scene_path)
   
