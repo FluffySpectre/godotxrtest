@@ -29,6 +29,7 @@ const PINCH_THRESHOLD = 0.7
 const GRAB_THRESHOLD = 0.8
 const GRAB_OPEN_FOR_HAND = 0.2
 const GRAB_CLOSE_FOR_HAND = 0.4
+const BACK_FACE_THRESHOLD = 0.5 # 1.0 = perfect alignment, 0.0 = any facing
 
 # Action paths for hand tracking
 const PINCH_PATH = "pinch"
@@ -62,28 +63,39 @@ func _check_hand_poses() -> void:
 
 func _check_hand_pose(hand_name: String) -> void:
   var controller = left_controller if hand_name == "left" else right_controller
-  var currently_active = hand_name == "left" && left_hand_pose_active || hand_name == "right" && right_hand_pose_active
-  
-  if !controller:
+  var controller_pointer = left_controller_pointer if hand_name == "left" else right_controller_pointer
+  if !controller || !controller_pointer:
     return
-  
+
+  var currently_active = (hand_name == "left" && left_hand_pose_active) || (hand_name == "right" && right_hand_pose_active)
+
   # Get the grab value to ensure the hand is open
   var grab_value = _get_action_value(controller, GRAB_PATH)
-  var hand_is_open = (!currently_active && grab_value <= GRAB_OPEN_FOR_HAND) || (currently_active && grab_value <= GRAB_CLOSE_FOR_HAND)
+  var hand_is_open = ((!currently_active && grab_value <= GRAB_OPEN_FOR_HAND) || (currently_active && grab_value <= GRAB_CLOSE_FOR_HAND))
 
-  var back_of_hand_facing_camera = hand_is_open
+  # Check if the user is looking at the back of their hand
+  var back_of_hand_facing_camera = true
+  var cam = get_viewport().get_camera_3d()
+  var to_hand = (controller_pointer.global_position - cam.global_position).normalized()
+  var b = controller_pointer.global_transform.basis
+  var dot_y = to_hand.dot(-b.y)
+  var dot_neg_z = to_hand.dot(b.z)
+  var best_dot = dot_y if dot_y > dot_neg_z else dot_neg_z
+  back_of_hand_facing_camera = best_dot > BACK_FACE_THRESHOLD
+
+  var pose_valid = hand_is_open && back_of_hand_facing_camera
 
   # Detect hand pose started
-  if back_of_hand_facing_camera && !currently_active:
+  if pose_valid && !currently_active:
     if hand_name == "left":
       left_hand_pose_active = true
     else:
       right_hand_pose_active = true
     emit_signal("hand_pose_started", hand_name)
     print("Hand back pose started: ", hand_name)
-  
+
   # Detect hand pose ended
-  elif !back_of_hand_facing_camera && currently_active:
+  elif !pose_valid && currently_active:
     if hand_name == "left":
       left_hand_pose_active = false
     else:
